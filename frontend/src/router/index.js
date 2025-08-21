@@ -1,50 +1,38 @@
-// src/router/index.js
+// frontend/src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import { currentUser } from '@/data/store.js'
-
 import DashboardView from '../views/DashboardView.vue'
-import LoginView from '../views/LoginView.vue' // Importa a nova página
+import LoginView from '../views/LoginView.vue'
 import ServicesView from '../views/ServicesView.vue'
 import FarmsView from '../views/FarmsView.vue'
 import UsersView from '../views/UsersView.vue'
+import WorkersView from '../views/WorkersView.vue' // <-- 1. IMPORTE AQUI
 
 const routes = [
-  {
-    path: '/login', // Rota para a página de login
-    name: 'login',
-    component: LoginView
-  },
-  {
-    path: '/',
-    name: 'dashboard',
-    component: DashboardView
-  },
+  { path: '/login', name: 'login', component: LoginView },
+  { path: '/', name: 'dashboard', component: DashboardView },
   { path: '/servicos', name: 'services', component: ServicesView },
   { path: '/fazendas', name: 'farms', component: FarmsView },
-  { path: '/usuarios', name: 'users', component: UsersView }
+  { path: '/usuarios', name: 'users', component: UsersView },
+  { path: '/trabalhadores', name: 'workers', component: WorkersView } // <-- 2. ADICIONE A ROTA AQUI
 ];
 
+// O resto do arquivo continua igual...
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 
-// GUARDA DE NAVEGAÇÃO (O "PORTEIRO")
 router.beforeEach((to, from, next) => {
-  const isUserLoggedIn = !!currentUser.value;
-  
-  // Se a rota precisa de autenticação e o usuário não está logado
-  if (to.name !== 'login' && !isUserLoggedIn) {
-    next({ name: 'login' }); // Redireciona para a página de login
-  }
-  // Se o usuário está logado e tenta acessar a página de login
-  else if (to.name === 'login' && isUserLoggedIn) {
-    next({ name: 'dashboard' }); // Redireciona para o dashboard
-  }
-  // Em qualquer outro caso, permite a navegação
-  else {
-    next();
-  }
+    // ... (lógica de autenticação)
+    const token = localStorage.getItem('authToken');
+    const isUserLoggedIn = !!token;
+    if (to.name !== 'login' && !isUserLoggedIn) {
+        next({ name: 'login' });
+    } else if (to.name === 'login' && isUserLoggedIn) {
+        next({ name: 'dashboard' });
+    } else {
+        next();
+    }
 });
 
-export default router
+export default router;
