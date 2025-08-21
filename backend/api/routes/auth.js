@@ -1,6 +1,5 @@
 // backend/api/routes/auth.js
 
-// --- IMPORTAÇÕES (UMA VEZ SÓ, NO TOPO) ---
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -9,13 +8,13 @@ const User = require('../../models/User');
 const auth = require('../../middleware/auth');
 require('dotenv').config();
 
-// --- ROTAS ---
-
-// @route   POST /api/auth/login
+// @route   POST /login
 // @desc    Autenticar usuário e obter token
 router.post('/login', async (req, res) => {
+  // Linha de depuração que adicionamos
+  console.log('>>> TENTATIVA DE ACESSAR A ROTA POST /login <<<'); 
+  
   const { login, password } = req.body;
-
   try {
     let user = await User.findOne({ login });
     if (!user) {
@@ -40,6 +39,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '8h' },
       (err, token) => {
         if (err) throw err;
+        console.log('>>> LOGIN BEM-SUCEDIDO, GERANDO TOKEN <<<');
         res.json({ token });
       }
     );
@@ -49,10 +49,12 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// @route   GET /api/auth/me
+// @route   GET /me
 // @desc    Obter os dados do usuário logado
 // @access  Privado
 router.get('/me', auth, async (req, res) => {
+  // Linha de depuração
+  console.log('>>> TENTATIVA DE ACESSAR A ROTA GET /me <<<'); 
   try {
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
@@ -62,6 +64,4 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-
-// --- EXPORTAÇÃO ---
 module.exports = router;

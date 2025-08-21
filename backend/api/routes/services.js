@@ -1,4 +1,3 @@
-// backend/api/routes/services.js
 const express = require('express');
 const router = express.Router();
 const auth = require('../../middleware/auth');
@@ -9,7 +8,7 @@ const Service = require('../../models/Service');
 // @access  Privado
 router.get('/', auth, async (req, res) => {
   try {
-    const services = await Service.find().sort({ name: 1 }); // .sort() para ordenar alfabeticamente
+    const services = await Service.find().sort({ name: 1 });
     res.json(services);
   } catch (err) {
     console.error(err.message);
@@ -23,19 +22,49 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { name, price, active } = req.body;
 
-  try {
-    const newService = new Service({
-      name,
-      price,
-      active
-    });
+  // Validação básica para garantir que os campos essenciais foram enviados
+  if (!name || price === undefined || price === null) {
+      return res.status(400).json({ msg: 'Por favor, inclua nome e preço para o serviço.' });
+  }
 
+  try {
+    const newService = new Service({ name, price, active });
     const service = await newService.save();
-    res.status(201).json(service); // Retorna o serviço recém-criado
+    res.status(201).json(service);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Erro no Servidor');
   }
+});
+
+// @route   PUT /api/services/:id
+// @desc    Atualizar (editar) um serviço
+// @access  Privado
+router.put('/:id', auth, async (req, res) => {
+    const { name, price, active } = req.body;
+
+    const serviceFields = {};
+    if (name) serviceFields.name = name;
+    if (price !== undefined) serviceFields.price = price;
+    if (typeof active === 'boolean') serviceFields.active = active;
+
+    try {
+        let service = await Service.findById(req.params.id);
+        if (!service) {
+            return res.status(404).json({ msg: 'Serviço não encontrado' });
+        }
+
+        service = await Service.findByIdAndUpdate(
+            req.params.id,
+            { $set: serviceFields },
+            { new: true }
+        );
+
+        res.json(service);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro no Servidor');
+    }
 });
 
 // @route   DELETE /api/services/:id
@@ -43,14 +72,11 @@ router.post('/', auth, async (req, res) => {
 // @access  Privado
 router.delete('/:id', auth, async (req, res) => {
   try {
-    let service = await Service.findById(req.params.id);
-
+    const service = await Service.findById(req.params.id);
     if (!service) {
       return res.status(404).json({ msg: 'Serviço não encontrado' });
     }
-
     await Service.findByIdAndDelete(req.params.id);
-
     res.json({ msg: 'Serviço removido com sucesso' });
   } catch (err) {
     console.error(err.message);

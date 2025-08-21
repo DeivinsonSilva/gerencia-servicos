@@ -48,7 +48,7 @@
                     <span v-else class="px-2.5 py-1 text-xs font-semibold text-white bg-slate-600 rounded-full">Inativo</span>
                   </td>
                   <td class="flex items-center gap-2">
-                    <button class="font-medium text-white bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-md text-xs transition-colors">Editar</button>
+                    <button @click="openEditModal(service)" class="font-medium text-white bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-md text-xs transition-colors">Editar</button>
                     <button @click="deleteService(service._id)" class="font-medium text-white bg-red-600 hover:bg-red-500 px-3 py-1 rounded-md text-xs transition-colors">Excluir</button>
                   </td>
                 </tr>
@@ -62,53 +62,65 @@
       </main>
     </div>
   </div>
+
+  <Modal :show="isModalOpen" @close="isModalOpen = false">
+    <template #header>Editar Serviço</template>
+    <template #body>
+      <form @submit.prevent="updateService" class="space-y-4">
+        <div>
+          <label for="editServiceName" class="form-label">Nome do Serviço:</label>
+          <input v-model="editingService.name" type="text" id="editServiceName" class="form-input">
+        </div>
+        <div>
+          <label for="editServicePrice" class="form-label">Preço Padrão (R$):</label>
+          <input v-model="editingService.price" type="number" step="0.01" id="editServicePrice" class="form-input">
+        </div>
+        <div class="flex items-center pt-2">
+          <input v-model="editingService.active" type="checkbox" id="editServiceActive" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500">
+          <label for="editServiceActive" class="ml-2 block text-sm text-slate-300">Ativo</label>
+        </div>
+      </form>
+    </template>
+    <template #footer>
+      <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
+      <button @click="updateService" class="btn btn-primary">Salvar Alterações</button>
+    </template>
+  </Modal>
+
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import api from '@/api.js';
+import Modal from '@/components/Modal.vue';
 
-// Estado Local da Página
 const services = ref([]);
 const newService = ref({ name: '', price: null, active: true });
+const isModalOpen = ref(false);
+const editingService = ref({ _id: null, name: '', price: null, active: true });
 
-// URL da API
-const API_URL = 'http://localhost:3000/api/services';
-
-// --- Funções Auxiliares ---
 const formatCurrency = (value) => {
   if (typeof value !== 'number') return 'R$ 0,00';
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-const getAuthConfig = () => {
-  const token = localStorage.getItem('authToken');
-  return { headers: { 'x-auth-token': token } };
-};
-
-// --- Lógica da API ---
-
-// 1. Buscar todos os serviços
 const fetchServices = async () => {
   try {
-    const response = await axios.get(API_URL, getAuthConfig());
+    const response = await api.get('/services');
     services.value = response.data;
   } catch (error) {
     console.error('Erro ao buscar serviços:', error);
-    alert('Não foi possível carregar os serviços. Verifique o console.');
+    alert('Não foi possível carregar os serviços.');
   }
 };
 
-// 2. Adicionar um novo serviço
 const addService = async () => {
   if (!newService.value.name || newService.value.price === null) {
     return alert('Por favor, preencha o nome e o preço.');
   }
   try {
-    await axios.post(API_URL, newService.value, getAuthConfig());
-    // Limpa o formulário
+    await api.post('/services', newService.value);
     newService.value = { name: '', price: null, active: true };
-    // Recarrega a lista para mostrar o novo item
     await fetchServices();
   } catch (error) {
     console.error('Erro ao adicionar serviço:', error);
@@ -116,12 +128,27 @@ const addService = async () => {
   }
 };
 
-// 3. Deletar um serviço
+const openEditModal = (service) => {
+  editingService.value = { ...service };
+  isModalOpen.value = true;
+};
+
+const updateService = async () => {
+  if (!editingService.value._id) return;
+  try {
+    await api.put(`/services/${editingService.value._id}`, editingService.value);
+    isModalOpen.value = false;
+    await fetchServices();
+  } catch (error) {
+    console.error('Erro ao atualizar serviço:', error);
+    alert('Não foi possível atualizar o serviço.');
+  }
+};
+
 const deleteService = async (id) => {
   if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
   try {
-    await axios.delete(`${API_URL}/${id}`, getAuthConfig());
-    // Recarrega a lista para remover o item deletado
+    await api.delete(`/services/${id}`);
     await fetchServices();
   } catch (error) {
     console.error('Erro ao deletar serviço:', error);
@@ -129,6 +156,5 @@ const deleteService = async (id) => {
   }
 };
 
-// Roda a função de busca assim que o componente é montado na tela
 onMounted(fetchServices);
 </script>

@@ -59,4 +59,41 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// backend/api/routes/farms.js
+
+// @route   PUT /api/farms/:id
+// @desc    Atualizar (editar) uma fazenda
+// @access  Privado
+router.put('/:id', auth, async (req, res) => {
+  // Pega os novos dados do corpo da requisição
+  const { name, owner, city, active } = req.body;
+
+  // Constrói um objeto com os campos a serem atualizados
+  const farmFields = {};
+  if (name) farmFields.name = name;
+  if (owner) farmFields.owner = owner;
+  if (city) farmFields.city = city;
+  if (typeof active === 'boolean') farmFields.active = active;
+
+  try {
+    let farm = await Farm.findById(req.params.id);
+
+    if (!farm) {
+      return res.status(404).json({ msg: 'Fazenda não encontrada' });
+    }
+
+    // Atualiza a fazenda no banco de dados
+    farm = await Farm.findByIdAndUpdate(
+      req.params.id,
+      { $set: farmFields },
+      { new: true } // {new: true} faz com que retorne o documento atualizado
+    );
+
+    res.json(farm);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Erro no Servidor');
+  }
+});
+
 module.exports = router;

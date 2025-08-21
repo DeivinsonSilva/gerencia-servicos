@@ -4,11 +4,9 @@
       <header class="mb-10">
         <h1 class="text-3xl font-bold text-white">Gerenciamento de Usuários</h1>
       </header>
-
       <div v-if="!isAdmin" class="card p-6 text-center">
         <p class="text-amber-400">Você não tem permissão para gerenciar usuários.</p>
       </div>
-
       <main v-else class="space-y-8">
         <div class="card p-6">
           <h2 class="text-xl font-semibold text-slate-200 mb-5">Cadastrar Novo Usuário</h2>
@@ -27,7 +25,7 @@
             </div>
             <div>
               <label for="userType" class="form-label">Tipo de Usuário:</label>
-              <select v-model="newUser.type" id="userType" class="form-select">
+              <select v-model="newUser.role" id="userType" class="form-select">
                 <option value="Operador">Operador</option>
                 <option value="Admin">Admin</option>
               </select>
@@ -57,7 +55,7 @@
                   <td>{{ user.login }}</td>
                   <td>{{ user.role }}</td>
                   <td class="flex items-center gap-2">
-                    <button class="font-medium text-white bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-md text-xs transition-colors">Editar</button>
+                    <button @click="openEditModal(user)" class="font-medium text-white bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-md text-xs transition-colors">Editar</button>
                     <button @click="deleteUser(user._id)" class="font-medium text-white bg-red-600 hover:bg-red-500 px-3 py-1 rounded-md text-xs transition-colors">Excluir</button>
                   </td>
                 </tr>
@@ -71,29 +69,54 @@
       </main>
     </div>
   </div>
+
+  <Modal :show="isModalOpen" @close="isModalOpen = false">
+    <template #header>Editar Usuário</template>
+    <template #body>
+      <form @submit.prevent="updateUser" class="space-y-4">
+        <div>
+          <label for="editUserName" class="form-label">Nome Completo:</label>
+          <input v-model="editingUser.name" type="text" id="editUserName" class="form-input">
+        </div>
+        <div>
+          <label for="editUserLogin" class="form-label">Login:</label>
+          <input v-model="editingUser.login" type="text" id="editUserLogin" class="form-input">
+        </div>
+        <div>
+          <label for="editUserRole" class="form-label">Tipo de Usuário:</label>
+          <select v-model="editingUser.role" id="editUserRole" class="form-select">
+            <option value="Operador">Operador</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <p class="text-xs text-slate-500 pt-2">A senha não pode ser alterada através deste formulário.</p>
+      </form>
+    </template>
+    <template #footer>
+      <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
+      <button @click="updateUser" class="btn btn-primary">Salvar Alterações</button>
+    </template>
+  </Modal>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import axios from 'axios';
+import api from '@/api.js';
 import { jwtDecode } from 'jwt-decode';
+import Modal from '@/components/Modal.vue';
 
 const users = ref([]);
-const newUser = ref({ name: '', login: '', password: '', type: 'Operador' });
-const API_URL = 'http://localhost:3000/api/users';
-const currentUserRole = ref(null);
+const newUser = ref({ name: '', login: '', password: '', role: 'Operador' }); // Corrigido de 'type' para 'role'
+const isModalOpen = ref(false);
+const editingUser = ref({ _id: null, name: '', login: '', role: '' });
+const currentUser = ref(null);
 
-const isAdmin = computed(() => currentUserRole.value === 'Admin');
-
-const getAuthConfig = () => {
-  const token = localStorage.getItem('authToken');
-  return { headers: { 'x-auth-token': token } };
-};
+const isAdmin = computed(() => currentUser.value && currentUser.value.role === 'Admin');
 
 const fetchUsers = async () => {
-  if (!isAdmin.value) return; // Se não for admin, nem tenta buscar
+  if (!isAdmin.value) return;
   try {
-    const response = await axios.get(API_URL, getAuthConfig());
+    const response = await api.get('/users');
     users.value = response.data;
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
@@ -106,8 +129,8 @@ const addUser = async () => {
     return alert('Por favor, preencha todos os campos.');
   }
   try {
-    await axios.post(`${API_URL}/register`, newUser.value, getAuthConfig());
-    newUser.value = { name: '', login: '', password: '', type: 'Operador' };
+    await api.post('/users/register', newUser.value);
+    newUser.value = { name: '', login: '', password: '', role: 'Operador' };
     await fetchUsers();
   } catch (error) {
     console.error('Erro ao adicionar usuário:', error);
@@ -115,10 +138,27 @@ const addUser = async () => {
   }
 };
 
+const openEditModal = (user) => {
+  editingUser.value = { ...user };
+  isModalOpen.value = true;
+};
+
+const updateUser = async () => {
+  if (!editingUser.value._id) return;
+  try {
+    await api.put(`/users/${editingUser.value._id}`, editingUser.value);
+    isModalOpen.value = false;
+    await fetchUsers();
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    alert('Não foi possível atualizar o usuário.');
+  }
+};
+
 const deleteUser = async (id) => {
   if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
   try {
-    await axios.delete(`${API_URL}/${id}`, getAuthConfig());
+    await api.delete(`/users/${id}`);
     await fetchUsers();
   } catch (error) {
     console.error('Erro ao deletar usuário:', error);
@@ -129,9 +169,8 @@ const deleteUser = async (id) => {
 onMounted(() => {
   const token = localStorage.getItem('authToken');
   if (token) {
-    const decoded = jwtDecode(token);
-    currentUserRole.value = decoded.user.role;
-    fetchUsers(); // Chama a busca de usuários após verificar o papel
+    currentUser.value = jwtDecode(token).user;
+    fetchUsers();
   }
 });
 </script>
