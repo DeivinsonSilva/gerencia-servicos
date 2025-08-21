@@ -5,9 +5,9 @@
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <router-link to="/" class="text-white text-xl font-bold tracking-wider">
+              <div class="text-white text-xl font-bold tracking-wider cursor-default">
                 SISTEMA DE GERENCIAMENTO
-              </router-link>
+              </div>
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-2">
