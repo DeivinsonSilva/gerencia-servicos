@@ -5,27 +5,41 @@ const WorkerSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true // Remove espaços em branco do início e do fim
+    trim: true
   },
-  isRegistered: { // "Registrado em Carteira?"
+  isRegistered: {
     type: Boolean,
     required: true
   },
-  registrationDate: { // "Data do Registro"
+  registrationDate: {
     type: Date,
     default: null
   },
-  childrenCount: { // "Número de Filhos"
+  childrenCount: {
     type: Number,
     required: true,
     default: 0
   },
-  active: { // "Trabalhador Ativo"
+  // --- NOVOS CAMPOS ---
+  semanaDentro: { // Para trabalhadores não registrados
+    type: Boolean,
+    default: false
+  },
+  hasRecurringDiscount: { // Se tem desconto recorrente
+    type: Boolean,
+    default: false
+  },
+  recurringDiscountValue: { // O valor do desconto
+    type: Number,
+    default: 0
+  },
+  // --- FIM DOS NOVOS CAMPOS ---
+  active: {
     type: Boolean,
     default: true
   }
 }, {
-  timestamps: true // Adiciona os campos createdAt e updatedAt automaticamente
+  timestamps: true
 });
 
 module.exports = mongoose.model('Worker', WorkerSchema);
