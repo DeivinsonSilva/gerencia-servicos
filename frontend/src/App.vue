@@ -1,20 +1,20 @@
 <template>
   <div class="min-h-screen bg-slate-900 font-sans text-slate-200">
-    
     <header v-if="currentUser" class="border-b border-slate-700/50">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <router-link to="/" class="text-white text-xl font-bold tracking-wider">
+              <div class="text-white text-xl font-bold tracking-wider cursor-default">
                 SISTEMA DE GERENCIAMENTO
-              </router-link>
+              </div>
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-2">
                 <router-link to="/" class="nav-link">Dashboard</router-link>
                 <router-link to="/servicos" class="nav-link">Serviços</router-link>
                 <router-link to="/fazendas" class="nav-link">Fazendas</router-link>
+                <router-link to="/trabalhadores" class="nav-link">Trabalhadores</router-link>
                 <router-link to="/usuarios" class="nav-link">Usuários</router-link>
               </div>
             </div>
@@ -30,11 +30,9 @@
         </div>
       </nav>
     </header>
-
     <main>
       <router-view />
     </main>
-
   </div>
 </template>
 
