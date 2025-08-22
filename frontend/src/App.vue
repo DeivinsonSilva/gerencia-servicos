@@ -12,6 +12,7 @@
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-2">
                 <router-link to="/" class="nav-link">Dashboard</router-link>
+                <router-link to="/registro-diario" class="nav-link">Registro Diário</router-link>
                 <router-link to="/servicos" class="nav-link">Serviços</router-link>
                 <router-link to="/fazendas" class="nav-link">Fazendas</router-link>
                 <router-link to="/trabalhadores" class="nav-link">Trabalhadores</router-link>

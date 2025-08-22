@@ -5,7 +5,8 @@ import LoginView from '../views/LoginView.vue'
 import ServicesView from '../views/ServicesView.vue'
 import FarmsView from '../views/FarmsView.vue'
 import UsersView from '../views/UsersView.vue'
-import WorkersView from '../views/WorkersView.vue' // <-- 1. IMPORTE AQUI
+import WorkersView from '../views/WorkersView.vue'
+import DailyLogView from '../views/DailyLogView.vue';
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView },
@@ -13,7 +14,9 @@ const routes = [
   { path: '/servicos', name: 'services', component: ServicesView },
   { path: '/fazendas', name: 'farms', component: FarmsView },
   { path: '/usuarios', name: 'users', component: UsersView },
-  { path: '/trabalhadores', name: 'workers', component: WorkersView } // <-- 2. ADICIONE A ROTA AQUI
+  { path: '/trabalhadores', name: 'workers', component: WorkersView },
+  { path: '/trabalhadores', name: 'workers', component: WorkersView },
+  { path: '/registro-diario', name: 'daily-log', component: DailyLogView }
 ];
 
 // O resto do arquivo continua igual...
