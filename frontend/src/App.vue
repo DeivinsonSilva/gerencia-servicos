@@ -13,9 +13,21 @@
               <div class="ml-10 flex items-baseline space-x-2">
                 <router-link to="/" class="nav-link">Dashboard</router-link>
                 <router-link to="/registro-diario" class="nav-link">Registro Diário</router-link>
-                <router-link to="/servicos" class="nav-link">Serviços</router-link>
-                <router-link to="/fazendas" class="nav-link">Fazendas</router-link>
-                <router-link to="/trabalhadores" class="nav-link">Trabalhadores</router-link>
+                <router-link to="/relatorios" class="nav-link">Relatórios</router-link>
+
+                <div class="relative" @mouseleave="showCadastrosMenu = false">
+                  <button @mouseover="showCadastrosMenu = true" 
+                          class="nav-link flex items-center">
+                    Cadastros
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
+                  <div v-if="showCadastrosMenu"
+                       class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
+                    <router-link to="/servicos" class="dropdown-link">Serviços</router-link>
+                    <router-link to="/fazendas" class="dropdown-link">Fazendas</router-link>
+                    <router-link to="/trabalhadores" class="dropdown-link">Trabalhadores</router-link>
+                  </div>
+                </div>
                 <router-link to="/usuarios" class="nav-link">Usuários</router-link>
               </div>
             </div>
@@ -38,10 +50,12 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'; // Precisamos importar o 'ref'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { currentUser, logout } from '@/data/store.js'
 
 const router = useRouter();
+const showCadastrosMenu = ref(false); // Variável para controlar a visibilidade do dropdown
 
 const handleLogout = () => {
   logout();
@@ -51,9 +65,16 @@ const handleLogout = () => {
 
 <style scoped>
 .nav-link {
-  @apply text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors;
+  @apply text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer;
 }
 .router-link-exact-active {
   @apply bg-blue-600 text-white;
+}
+.dropdown-link {
+  @apply block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white w-full text-left;
+}
+/* Garante que o link ativo dentro do dropdown também fique destacado */
+.dropdown-link.router-link-exact-active {
+    @apply bg-blue-600;
 }
 </style>
