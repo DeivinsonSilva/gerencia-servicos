@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const WorkLogSchema = new mongoose.Schema({
+const WorkLogSchema = new Schema({
   date: {
     type: Date,
     required: true

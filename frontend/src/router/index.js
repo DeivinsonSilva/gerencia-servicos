@@ -6,7 +6,8 @@ import ServicesView from '../views/ServicesView.vue'
 import FarmsView from '../views/FarmsView.vue'
 import UsersView from '../views/UsersView.vue'
 import WorkersView from '../views/WorkersView.vue'
-import DailyLogView from '../views/DailyLogView.vue';
+import DailyLogView from '../views/DailyLogView.vue'
+import ReportsView from '../views/ReportsView.vue';
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView },
@@ -16,7 +17,8 @@ const routes = [
   { path: '/usuarios', name: 'users', component: UsersView },
   { path: '/trabalhadores', name: 'workers', component: WorkersView },
   { path: '/trabalhadores', name: 'workers', component: WorkersView },
-  { path: '/registro-diario', name: 'daily-log', component: DailyLogView }
+  { path: '/registro-diario', name: 'daily-log', component: DailyLogView },
+  { path: '/relatorios', name: 'reports', component: ReportsView }
 ];
 
 // O resto do arquivo continua igual...

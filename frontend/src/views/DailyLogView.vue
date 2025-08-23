@@ -182,7 +182,6 @@ import { ref, onMounted, computed, watch } from 'vue';
 import api from '@/api.js';
 import Modal from '@/components/Modal.vue';
 
-// --- ESTADO REATIVO ---
 const workers = ref([]);
 const farms = ref([]);
 const services = ref([]);
@@ -201,14 +200,13 @@ const isModalOpen = ref(false);
 const editingLog = ref({});
 const editingIsAbsent = computed({
   get: () => editingLog.value.status === 'Falta',
-  set: (value) => { 
+  set: (value) => {
     if (editingLog.value) {
       editingLog.value.status = value ? 'Falta' : 'Presente';
     }
   }
 });
 
-// --- WATCHERS ---
 watch(isAbsent, (isMarkedAsAbsent) => {
   if (isMarkedAsAbsent) {
     newLog.value.farm = '';
@@ -218,10 +216,8 @@ watch(isAbsent, (isMarkedAsAbsent) => {
   }
 });
 
-// --- NOVA LÓGICA ---
-// "Assiste" a mudança de serviço no modal de edição e atualiza o preço
 watch(() => editingLog.value.service, (newServiceId) => {
-  if (newServiceId && services.value.length > 0) {
+  if (newServiceId && services.value.length > 0 && !editingIsAbsent.value) {
     const selectedService = services.value.find(s => s._id === newServiceId);
     if (selectedService) {
       editingLog.value.unitPrice = selectedService.price;
@@ -229,13 +225,11 @@ watch(() => editingLog.value.service, (newServiceId) => {
   }
 });
 
-// --- FUNÇÕES AUXILIARES ---
 const formatCurrency = (value) => {
   if (typeof value !== 'number') return 'R$ 0,00';
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-// --- LÓGICA DA API ---
 const fetchInitialData = async () => {
   try {
     const [workersRes, farmsRes, servicesRes] = await Promise.all([
@@ -257,8 +251,9 @@ const fetchWorkLogs = async () => {
     return;
   }
   try {
+    // A API agora retorna um objeto, pegamos os logs de dentro dele
     const response = await api.get(`/worklogs?date=${selectedDate.value}`);
-    workLogs.value = response.data;
+    workLogs.value = response.data.logs;
   } catch (error) {
     console.error(`Erro ao buscar registros para a data ${selectedDate.value}:`, error);
   }
@@ -322,7 +317,6 @@ const deleteWorkLog = async (id) => {
   }
 };
 
-// --- LÓGICA DA PÁGINA ---
 const updatePrice = () => {
   const selectedService = services.value.find(s => s._id === newLog.value.service);
   if (selectedService) {
@@ -353,7 +347,6 @@ const availableWorkers = computed(() => {
   return workers.value.filter(worker => !loggedWorkerIds.includes(worker._id));
 });
 
-// --- "GANCHOS" DO VUE ---
 onMounted(async () => {
   await fetchInitialData();
 });
