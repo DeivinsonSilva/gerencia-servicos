@@ -18,5 +18,6 @@ app.use('/api/users', require(path.join(__dirname, 'routes/users.js')));
 app.use('/api/workers', require(path.join(__dirname, 'routes/workers.js')));
 app.use('/api/worklogs', require(path.join(__dirname, 'routes/worklogs.js')));
 app.use('/api/reports', require(path.join(__dirname, 'routes/reports.js')));
+app.use('/api/payroll', require(path.join(__dirname, 'routes/payroll.js')));
 
 module.exports = app;

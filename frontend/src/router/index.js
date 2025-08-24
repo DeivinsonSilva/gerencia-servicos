@@ -7,7 +7,8 @@ import FarmsView from '../views/FarmsView.vue'
 import UsersView from '../views/UsersView.vue'
 import WorkersView from '../views/WorkersView.vue'
 import DailyLogView from '../views/DailyLogView.vue'
-import ReportsView from '../views/ReportsView.vue';
+import ReportsView from '../views/ReportsView.vue'
+import PayslipView from '../views/PayslipView.vue';
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView },
@@ -18,7 +19,8 @@ const routes = [
   { path: '/trabalhadores', name: 'workers', component: WorkersView },
   { path: '/trabalhadores', name: 'workers', component: WorkersView },
   { path: '/registro-diario', name: 'daily-log', component: DailyLogView },
-  { path: '/relatorios', name: 'reports', component: ReportsView }
+  { path: '/relatorios', name: 'reports', component: ReportsView },
+  { path: '/folha-pagamento', name: 'payslip', component: PayslipView }
 ];
 
 // O resto do arquivo continua igual...
