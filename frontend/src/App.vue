@@ -13,21 +13,30 @@
               <div class="ml-10 flex items-baseline space-x-2">
                 <router-link to="/" class="nav-link">Dashboard</router-link>
                 <router-link to="/registro-diario" class="nav-link">Registro Diário</router-link>
-                <router-link to="/relatorios" class="nav-link">Relatórios</router-link>
+
+                <div class="relative" @mouseleave="showFinanceiroMenu = false">
+                  <button @mouseover="showFinanceiroMenu = true" class="nav-link flex items-center">
+                    Financeiro
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
+                  <div v-if="showFinanceiroMenu" class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
+                    <router-link to="/relatorios" class="dropdown-link">Relatórios</router-link>
+                    <router-link to="/folha-pagamento" class="dropdown-link">Folha de Pagamento</router-link>
+                  </div>
+                </div>
 
                 <div class="relative" @mouseleave="showCadastrosMenu = false">
-                  <button @mouseover="showCadastrosMenu = true" 
-                          class="nav-link flex items-center">
+                  <button @mouseover="showCadastrosMenu = true" class="nav-link flex items-center">
                     Cadastros
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                   </button>
-                  <div v-if="showCadastrosMenu"
-                       class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
+                  <div v-if="showCadastrosMenu" class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
                     <router-link to="/servicos" class="dropdown-link">Serviços</router-link>
                     <router-link to="/fazendas" class="dropdown-link">Fazendas</router-link>
                     <router-link to="/trabalhadores" class="dropdown-link">Trabalhadores</router-link>
                   </div>
                 </div>
+                
                 <router-link to="/usuarios" class="nav-link">Usuários</router-link>
               </div>
             </div>
@@ -50,12 +59,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'; // Precisamos importar o 'ref'
+import { ref } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { currentUser, logout } from '@/data/store.js'
 
 const router = useRouter();
-const showCadastrosMenu = ref(false); // Variável para controlar a visibilidade do dropdown
+const showCadastrosMenu = ref(false);
+const showFinanceiroMenu = ref(false); // Nova variável para o menu Financeiro
 
 const handleLogout = () => {
   logout();
@@ -73,7 +83,6 @@ const handleLogout = () => {
 .dropdown-link {
   @apply block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white w-full text-left;
 }
-/* Garante que o link ativo dentro do dropdown também fique destacado */
 .dropdown-link.router-link-exact-active {
     @apply bg-blue-600;
 }
