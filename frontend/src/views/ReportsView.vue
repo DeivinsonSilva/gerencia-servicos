@@ -32,7 +32,7 @@
             <div class="md:col-span-3 flex items-center gap-2">
               <button @click="generateReport(1)" class="btn btn-primary">Gerar Relatório</button>
               <button @click="downloadPDF" class="btn bg-red-700 hover:bg-red-600">Baixar PDF Completo</button>
-              <button class="btn bg-green-700 hover:bg-green-600">Baixar Excel</button>
+              <button @click="downloadExcel" class="btn bg-green-700 hover:bg-green-600">Baixar Excel</button>
             </div>
           </div>
         </div>
@@ -139,6 +139,7 @@ import Pagination from '@/components/Pagination.vue';
 import Modal from '@/components/Modal.vue';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const filterType = ref('mensal');
 const dateFilter = ref(new Date().toISOString().slice(0, 7));
@@ -192,7 +193,7 @@ const downloadPDF = async () => {
     const allLogs = response.data.logs;
 
     if (allLogs.length === 0) {
-        return alert('Não há dados para exportar com os filtros selecionados.');
+      return alert('Não há dados para exportar com os filtros selecionados.');
     }
 
     const doc = new jsPDF();
@@ -214,36 +215,61 @@ const downloadPDF = async () => {
       tableRows.push(logData);
     });
 
-    // --- NOVA LÓGICA DO RODAPÉ ---
     const generationDate = new Date().toLocaleString('pt-BR');
-
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 20,
-      // 'didDrawPage' é uma função que roda para cada página do PDF
       didDrawPage: function (data) {
-        // Pega a altura total da página
         const pageHeight = doc.internal.pageSize.getHeight();
-        
-        // Configura a fonte para o rodapé
         doc.setFontSize(8);
-        doc.setTextColor(150); // Cor cinza
-        
-        // Escreve o texto no rodapé
-        doc.text(
-          `Relatório gerado em: ${generationDate}`,
-          data.settings.margin.left, // Alinha com a margem esquerda
-          pageHeight - 10 // Posição a 10 unidades da parte de baixo
-        );
+        doc.setTextColor(150);
+        doc.text(`Relatório gerado em: ${generationDate}`, data.settings.margin.left, pageHeight - 10);
       },
     });
 
     doc.save(`relatorio_${dateFilter.value}.pdf`);
-
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
     alert("Não foi possível gerar o PDF.");
+  }
+};
+
+const downloadExcel = async () => {
+  try {
+    const params = { limit: 0 };
+    if (filterType.value === 'diario') {
+      if (!dateFilter.value) return alert('Por favor, selecione uma data.');
+      params.date = dateFilter.value;
+    } else {
+      if (!dateFilter.value) return alert('Por favor, selecione um mês.');
+      params.month = dateFilter.value;
+    }
+    const response = await api.get('/worklogs', { params });
+    const allLogs = response.data.logs;
+
+    if (allLogs.length === 0) {
+      return alert('Não há dados para exportar com os filtros selecionados.');
+    }
+
+    const dataToExport = allLogs.map(log => ({
+      'Data': new Date(log.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+      'Trabalhador': log.worker.name,
+      'Status': log.status,
+      'Fazenda': log.farm?.name || 'N/A',
+      'Serviço': log.service?.name || 'N/A',
+      'Produção': log.status === 'Presente' ? log.production : 'N/A',
+      'Preço Unit.': log.status === 'Presente' ? log.unitPrice : 'N/A',
+      'Pagamento Total': log.totalPay
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Relatório");
+    XLSX.writeFile(workbook, `relatorio_${dateFilter.value}.xlsx`);
+  } catch (error) {
+    console.error("Erro ao gerar Excel:", error);
+    alert("Não foi possível gerar o arquivo Excel.");
   }
 };
 

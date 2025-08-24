@@ -17,7 +17,8 @@
     "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",
     "vue": "^3.5.18",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
