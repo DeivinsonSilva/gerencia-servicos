@@ -31,7 +31,7 @@
 
             <div class="md:col-span-3 flex items-center gap-2">
               <button @click="generateReport(1)" class="btn btn-primary">Gerar Relatório</button>
-              <button class="btn bg-red-700 hover:bg-red-600">Baixar PDF Completo</button>
+              <button @click="downloadPDF" class="btn bg-red-700 hover:bg-red-600">Baixar PDF Completo</button>
               <button class="btn bg-green-700 hover:bg-green-600">Baixar Excel</button>
             </div>
           </div>
@@ -46,7 +46,7 @@
           </div>
           <div class="table-container">
             <table class="data-table">
-              <thead>
+               <thead>
                 <tr>
                   <th>Data</th>
                   <th>Trabalhador</th>
@@ -85,50 +85,51 @@
           </div>
         </div>
       </main>
+
+      <Modal :show="isModalOpen" @close="isModalOpen = false">
+        <template #header>Editar Lançamento</template>
+        <template #body>
+          <form v-if="editingLog._id" @submit.prevent="updateWorkLog" class="space-y-4">
+            <div>
+              <label class="form-label">Trabalhador:</label>
+              <p class="font-semibold text-white mt-1">{{ editingLog.workerName }}</p>
+            </div>
+            <div class="flex items-center">
+              <input v-model="editingIsAbsent" type="checkbox" id="edit_markAbsent" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500">
+              <label for="edit_markAbsent" class="ml-2 block text-sm text-slate-300">Marcar como Falta</label>
+            </div>
+            <div v-if="!editingIsAbsent" class="space-y-4">
+              <div>
+                <label for="edit_farmSelect" class="form-label">Fazenda:</label>
+                <select v-model="editingLog.farm" id="edit_farmSelect" class="form-select">
+                  <option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label for="edit_serviceSelect" class="form-label">Serviço:</label>
+                <select v-model="editingLog.service" id="edit_serviceSelect" class="form-select">
+                  <option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label for="edit_production" class="form-label">Produção:</label>
+                <input v-model.number="editingLog.production" type="number" id="edit_production" class="form-input">
+              </div>
+              <div>
+                <label for="edit_unitPrice" class="form-label">Preço (R$):</label>
+                <input v-model.number="editingLog.unitPrice" type="number" step="0.01" id="edit_unitPrice" class="form-input">
+              </div>
+            </div>
+          </form>
+        </template>
+        <template #footer>
+          <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
+          <button @click="updateWorkLog" class="btn btn-primary">Salvar Alterações</button>
+        </template>
+      </Modal>
+
     </div>
   </div>
-
-  <Modal :show="isModalOpen" @close="isModalOpen = false">
-    <template #header>Editar Lançamento</template>
-    <template #body>
-      <form v-if="editingLog._id" @submit.prevent="updateWorkLog" class="space-y-4">
-        <div>
-          <label class="form-label">Trabalhador:</label>
-          <p class="font-semibold text-white mt-1">{{ editingLog.workerName }}</p>
-        </div>
-        <div class="flex items-center">
-          <input v-model="editingIsAbsent" type="checkbox" id="edit_markAbsent" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500">
-          <label for="edit_markAbsent" class="ml-2 block text-sm text-slate-300">Marcar como Falta</label>
-        </div>
-        <div v-if="!editingIsAbsent" class="space-y-4">
-          <div>
-            <label for="edit_farmSelect" class="form-label">Fazenda:</label>
-            <select v-model="editingLog.farm" id="edit_farmSelect" class="form-select">
-              <option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label for="edit_serviceSelect" class="form-label">Serviço:</label>
-            <select v-model="editingLog.service" id="edit_serviceSelect" class="form-select">
-              <option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label for="edit_production" class="form-label">Produção:</label>
-            <input v-model.number="editingLog.production" type="number" id="edit_production" class="form-input">
-          </div>
-          <div>
-            <label for="edit_unitPrice" class="form-label">Preço (R$):</label>
-            <input v-model.number="editingLog.unitPrice" type="number" step="0.01" id="edit_unitPrice" class="form-input">
-          </div>
-        </div>
-      </form>
-    </template>
-    <template #footer>
-      <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateWorkLog" class="btn btn-primary">Salvar Alterações</button>
-    </template>
-  </Modal>
 </template>
 
 <script setup>
@@ -136,6 +137,8 @@ import { ref, onMounted, computed } from 'vue';
 import api from '@/api.js';
 import Pagination from '@/components/Pagination.vue';
 import Modal from '@/components/Modal.vue';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const filterType = ref('mensal');
 const dateFilter = ref(new Date().toISOString().slice(0, 7));
@@ -175,6 +178,75 @@ const goToPage = (page) => {
   generateReport(page);
 };
 
+const downloadPDF = async () => {
+  try {
+    const params = { limit: 0 };
+    if (filterType.value === 'diario') {
+      if (!dateFilter.value) return alert('Por favor, selecione uma data.');
+      params.date = dateFilter.value;
+    } else {
+      if (!dateFilter.value) return alert('Por favor, selecione um mês.');
+      params.month = dateFilter.value;
+    }
+    const response = await api.get('/worklogs', { params });
+    const allLogs = response.data.logs;
+
+    if (allLogs.length === 0) {
+        return alert('Não há dados para exportar com os filtros selecionados.');
+    }
+
+    const doc = new jsPDF();
+    doc.text(`Relatório de Atividades - ${dateFilter.value}`, 14, 15);
+
+    const tableColumn = ["Data", "Trabalhador", "Status", "Fazenda", "Serviço", "Prod.", "Total"];
+    const tableRows = [];
+
+    allLogs.forEach(log => {
+      const logData = [
+        new Date(log.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+        log.worker.name,
+        log.status,
+        log.farm?.name || 'N/A',
+        log.service?.name || 'N/A',
+        log.status === 'Presente' ? log.production : 'N/A',
+        formatCurrency(log.totalPay)
+      ];
+      tableRows.push(logData);
+    });
+
+    // --- NOVA LÓGICA DO RODAPÉ ---
+    const generationDate = new Date().toLocaleString('pt-BR');
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+      // 'didDrawPage' é uma função que roda para cada página do PDF
+      didDrawPage: function (data) {
+        // Pega a altura total da página
+        const pageHeight = doc.internal.pageSize.getHeight();
+        
+        // Configura a fonte para o rodapé
+        doc.setFontSize(8);
+        doc.setTextColor(150); // Cor cinza
+        
+        // Escreve o texto no rodapé
+        doc.text(
+          `Relatório gerado em: ${generationDate}`,
+          data.settings.margin.left, // Alinha com a margem esquerda
+          pageHeight - 10 // Posição a 10 unidades da parte de baixo
+        );
+      },
+    });
+
+    doc.save(`relatorio_${dateFilter.value}.pdf`);
+
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    alert("Não foi possível gerar o PDF.");
+  }
+};
+
 const openEditModal = (log) => {
   editingLog.value = {
     _id: log._id,
@@ -200,7 +272,6 @@ const updateWorkLog = async () => {
     };
     await api.put(`/worklogs/${editingLog.value._id}`, payload);
     isModalOpen.value = false;
-    // Atualiza o relatório na página atual
     await generateReport(reportData.value.page); 
   } catch (error) {
     console.error("Erro ao atualizar registro:", error);
@@ -211,7 +282,6 @@ const deleteWorkLog = async (id) => {
   if (!confirm('Tem certeza que deseja remover este registro?')) return;
   try {
     await api.delete(`/worklogs/${id}`);
-    // Atualiza o relatório na página atual
     await generateReport(reportData.value.page);
   } catch (error) {
     console.error("Erro ao deletar registro:", error);
@@ -237,7 +307,7 @@ const formatCurrency = (value) => {
 };
 
 onMounted(() => {
-    fetchDropdownData(); // Carrega os dados para o modal de edição
-    generateReport(); // Gera o relatório inicial para o mês atual
+    fetchDropdownData();
+    generateReport();
 });
 </script>
