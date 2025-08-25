@@ -1,0 +1,24 @@
+# frontend/netlify.toml
+
+# Configurações de build principais
+[build]
+  # Comando que a Netlify vai rodar. Ele executa o script "build" do seu package.json da raiz.
+  command = "npm run build"
+
+  # Onde os arquivos do seu front-end estarão após o build.
+  publish = "frontend/dist"
+
+  # Onde estão as funções da sua API (back-end).
+  functions = "backend/api"
+
+# Redirecionamento para a API funcionar (essencial)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Redirecionamento para o Vue Router funcionar (essencial para SPAs)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
