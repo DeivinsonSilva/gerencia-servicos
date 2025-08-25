@@ -14,30 +14,46 @@
                 <router-link to="/" class="nav-link">Dashboard</router-link>
                 <router-link to="/registro-diario" class="nav-link">Registro Diário</router-link>
 
-                <div class="relative" @mouseleave="showFinanceiroMenu = false">
-                  <button @mouseover="showFinanceiroMenu = true" class="nav-link flex items-center">
+                <div class="relative">
+                  <button @click="toggleMenu('financeiro')" class="nav-link flex items-center">
                     Financeiro
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                   </button>
-                  <div v-if="showFinanceiroMenu" class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
-                    <router-link to="/relatorios" class="dropdown-link">Relatórios</router-link>
-                    <router-link to="/folha-pagamento" class="dropdown-link">Folha de Pagamento</router-link>
+                  <div v-if="openMenu === 'financeiro'"
+                       @mouseleave="openMenu = null" 
+                       class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
+                    <router-link to="/relatorios" class="dropdown-link" @click="openMenu = null">Relatórios</router-link>
+                    <router-link to="/folha-pagamento" class="dropdown-link" @click="openMenu = null">Folha de Pagamento</router-link>
                   </div>
                 </div>
 
-                <div class="relative" @mouseleave="showCadastrosMenu = false">
-                  <button @mouseover="showCadastrosMenu = true" class="nav-link flex items-center">
+                <div class="relative">
+                  <button @click="toggleMenu('cadastros')" class="nav-link flex items-center">
                     Cadastros
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                   </button>
-                  <div v-if="showCadastrosMenu" class="absolute z-10 mt-2 w-48 bg-slate-800 rounded-md shadow-lg border border-slate-700">
-                    <router-link to="/servicos" class="dropdown-link">Serviços</router-link>
-                    <router-link to="/fazendas" class="dropdown-link">Fazendas</router-link>
-                    <router-link to="/trabalhadores" class="dropdown-link">Trabalhadores</router-link>
+                  <div v-if="openMenu === 'cadastros'"
+                       @mouseleave="openMenu = null"
+                       class="absolute z-10 mt-2 w-56 bg-slate-800 rounded-md shadow-lg border border-slate-700">
+                    <router-link to="/servicos" class="dropdown-link" @click="openMenu = null">Gerenciar Serviços</router-link>
+                    <router-link to="/fazendas" class="dropdown-link" @click="openMenu = null">Gerenciar Fazendas</router-link>
+                    <router-link to="/trabalhadores" class="dropdown-link" @click="openMenu = null">Gerenciar Trabalhadores</router-link>
                   </div>
                 </div>
-                
-                <router-link to="/usuarios" class="nav-link">Usuários</router-link>
+
+                <div class="relative" v-if="isAdmin">
+                  <button @click="toggleMenu('admin')" class="nav-link flex items-center">
+                    Admin
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </button>
+                   <div v-if="openMenu === 'admin'"
+                       @mouseleave="openMenu = null"
+                       class="absolute z-10 mt-2 w-56 bg-slate-800 rounded-md shadow-lg border border-slate-700">
+                    <router-link to="/usuarios" class="dropdown-link" @click="openMenu = null">Gerenciar Usuários</router-link>
+                    <router-link to="/admin" class="dropdown-link" @click="openMenu = null">Dashboard do Sistema</router-link>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -59,13 +75,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { currentUser, logout } from '@/data/store.js'
 
 const router = useRouter();
-const showCadastrosMenu = ref(false);
-const showFinanceiroMenu = ref(false); // Nova variável para o menu Financeiro
+// Variável única para controlar qual menu está aberto
+const openMenu = ref(null); 
+
+const isAdmin = computed(() => currentUser.value && currentUser.value.role === 'Admin');
+
+// Função inteligente para abrir/fechar menus
+const toggleMenu = (menu) => {
+  if (openMenu.value === menu) {
+    openMenu.value = null; // Se o menu clicado já está aberto, fecha-o
+  } else {
+    openMenu.value = menu; // Se não, abre o menu clicado
+  }
+};
 
 const handleLogout = () => {
   logout();
