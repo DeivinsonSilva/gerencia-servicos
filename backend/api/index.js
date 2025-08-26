@@ -5,10 +5,16 @@ const path = require('path');
 const connectDB = require('../config/db');
 
 connectDB();
+
 const app = express();
-app.use(cors()); // Essencial para permitir a conexão do front-end
+
+// Habilita o CORS para todas as origens. Essencial para o deploy.
+// Esta linha deve vir ANTES de todas as outras configurações de rota.
+app.use(cors());
+
 app.use(express.json());
 
+// Suas rotas
 app.use('/api/auth', require(path.join(__dirname, 'routes/auth.js')));
 app.use('/api/farms', require(path.join(__dirname, 'routes/farms.js')));
 app.use('/api/services', require(path.join(__dirname, 'routes/services.js')));
