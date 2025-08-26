@@ -9,7 +9,6 @@ connectDB();
 const app = express();
 
 // Habilita o CORS para todas as origens. Essencial para o deploy.
-// Esta linha deve vir ANTES de todas as outras.
 app.use(cors());
 
 app.use(express.json());
