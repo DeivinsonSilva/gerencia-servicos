@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../../middleware/auth');
 const Service = require('../../models/Service');
+const { check, validationResult } = require('express-validator');
 
 // @route   GET /api/services
 // @desc    Obter todos os serviços
@@ -17,32 +18,46 @@ router.get('/', auth, async (req, res) => {
 });
 
 // @route   POST /api/services
-// @desc    Adicionar um novo serviço
-// @access  Privado
-router.post('/', auth, async (req, res) => {
-  const { name, price, active } = req.body;
+// @desc    Adicionar um novo serviço (com validação)
+router.post('/',
+  [
+    auth,
+    check('name', 'O nome do serviço é obrigatório').not().isEmpty().trim(),
+    check('price', 'O preço é obrigatório e deve ser um número').isNumeric(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-  // Validação básica para garantir que os campos essenciais foram enviados
-  if (!name || price === undefined || price === null) {
-      return res.status(400).json({ msg: 'Por favor, inclua nome e preço para o serviço.' });
+    const { name, price, active } = req.body;
+    try {
+      const newService = new Service({ name, price, active });
+      const service = await newService.save();
+      res.status(201).json(service);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Erro no Servidor');
+    }
   }
-
-  try {
-    const newService = new Service({ name, price, active });
-    const service = await newService.save();
-    res.status(201).json(service);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Erro no Servidor');
-  }
-});
+);
 
 // @route   PUT /api/services/:id
-// @desc    Atualizar (editar) um serviço
-// @access  Privado
-router.put('/:id', auth, async (req, res) => {
-    const { name, price, active } = req.body;
+// @desc    Atualizar (editar) um serviço (com validação)
+router.put('/:id',
+  [
+    auth,
+    check('name', 'O nome do serviço é obrigatório').not().isEmpty().trim(),
+    check('price', 'O preço é obrigatório e deve ser um número').isNumeric(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
 
+    const { name, price, active } = req.body;
     const serviceFields = {};
     if (name) serviceFields.name = name;
     if (price !== undefined) serviceFields.price = price;
@@ -59,13 +74,13 @@ router.put('/:id', auth, async (req, res) => {
             { $set: serviceFields },
             { new: true }
         );
-
         res.json(service);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Erro no Servidor');
     }
-});
+  }
+);
 
 // @route   DELETE /api/services/:id
 // @desc    Deletar um serviço
