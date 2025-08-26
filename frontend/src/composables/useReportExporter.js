@@ -3,24 +3,17 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
-// Helper para formatar moeda
-const formatCurrency = (value) => {
-    if (typeof value !== 'number') return 'R$ 0,00';
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
-
-// Helper para obter o nome do mês
-const getMonthName = (monthNum) => {
-    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    return months[monthNum - 1];
-};
-
 export function useReportExporter() {
-    
-    // --- EXPORTADORES PARA RELATÓRIO DE LOGS (DIÁRIO/MENSAL) ---
+    const formatCurrency = (value) => {
+        if (typeof value !== 'number') return 'R$ 0,00';
+        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
 
     const downloadLogReportPDF = (logs, filterValue) => {
-        if (!logs || logs.length === 0) return alert('Não há dados para exportar.');
+        if (!logs || logs.length === 0) {
+            // Usaremos toast na view, mas deixamos um retorno seguro aqui
+            return;
+        }
         
         const doc = new jsPDF();
         doc.text(`Relatório de Atividades - ${filterValue}`, 14, 15);
@@ -39,15 +32,22 @@ export function useReportExporter() {
             startY: 20,
             didDrawPage: (data) => {
                 const pageHeight = doc.internal.pageSize.getHeight();
-                doc.setFontSize(8); doc.setTextColor(150);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
                 doc.text(`Relatório gerado em: ${generationDate}`, data.settings.margin.left, pageHeight - 10);
             },
         });
-        doc.save(`relatorio_atividades_${filterValue}.pdf`);
+
+        // --- A MUDANÇA ESTÁ AQUI ---
+        // Em vez de doc.save(), usamos doc.output() para abrir em uma nova guia.
+        doc.output('dataurlnewwindow');
     };
 
     const downloadLogReportExcel = (logs, filterValue) => {
-        if (!logs || logs.length === 0) return alert('Não há dados para exportar.');
+        if (!logs || logs.length === 0) {
+            // Usaremos toast na view
+            return;
+        }
 
         const dataToExport = logs.map(log => ({
           'Data': new Date(log.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
@@ -61,12 +61,11 @@ export function useReportExporter() {
         XLSX.writeFile(workbook, `relatorio_atividades_${filterValue}.xlsx`);
     };
 
-    // --- NOVOS EXPORTADORES PARA RELATÓRIO ANUAL ---
-
+    // As funções para o relatório anual permanecem as mesmas
     const downloadAnnualReportPDF = (reportData, year) => {
         if (!reportData || reportData.length === 0) return alert('Não há dados para exportar.');
         
-        const doc = new jsPDF({ orientation: 'landscape' }); // PDF deitado para caber mais colunas
+        const doc = new jsPDF({ orientation: 'landscape' });
         doc.text(`Relatório Anual de Dias Trabalhados - ${year}`, 14, 15);
         const tableColumn = ["Trabalhador", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez", "Total"];
         const tableRows = reportData.map(workerReport => {
@@ -90,11 +89,16 @@ export function useReportExporter() {
                 doc.text(`Relatório gerado em: ${generationDate}`, data.settings.margin.left, pageHeight - 10);
             },
         });
-        doc.save(`relatorio_anual_${year}.pdf`);
+        doc.output('dataurlnewwindow');
     };
 
     const downloadAnnualReportExcel = (reportData, year) => {
         if (!reportData || reportData.length === 0) return alert('Não há dados para exportar.');
+
+        const getMonthName = (monthNum) => {
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            return months[monthNum - 1];
+        };
 
         const dataToExport = reportData.map(workerReport => {
             const row = { 'Trabalhador': workerReport.workerName };
@@ -112,7 +116,6 @@ export function useReportExporter() {
         XLSX.utils.book_append_sheet(workbook, worksheet, `Relatório Anual ${year}`);
         XLSX.writeFile(workbook, `relatorio_anual_${year}.xlsx`);
     };
-
 
     return { downloadLogReportPDF, downloadLogReportExcel, downloadAnnualReportPDF, downloadAnnualReportExcel };
 }
