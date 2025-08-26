@@ -12,7 +12,6 @@
               <label for="workerName" class="form-label">Nome Completo:</label>
               <input v-model="newWorker.name" type="text" id="workerName" class="form-input">
             </div>
-            
             <div class="space-y-2">
               <label class="form-label">Registrado em Carteira?</label>
               <div class="flex items-center gap-x-6">
@@ -26,16 +25,14 @@
                 </div>
               </div>
             </div>
-
             <div v-if="newWorker.isRegistered">
               <label for="registrationDate" class="form-label">Data do Registro:</label>
               <input v-model="newWorker.registrationDate" type="date" id="registrationDate" class="form-input">
             </div>
             <div v-if="newWorker.isRegistered">
               <label for="childrenCount" class="form-label">Número de Filhos:</label>
-              <input v-model.number="newWorker.childrenCount" type="number" id="childrenCount" min="0" class="form-input">
+              <input v-model.number="newWorker.childrenCount" type="number" min="0" id="childrenCount" class="form-input">
             </div>
-            
             <div v-if="!newWorker.isRegistered" class="space-y-2">
               <label class="form-label">Semana Dentro?</label>
               <div class="flex items-center gap-x-6">
@@ -49,7 +46,6 @@
                 </div>
               </div>
             </div>
-
             <div class="space-y-2">
               <label class="form-label">Desconto Recorrente?</label>
               <div class="flex items-center gap-x-6">
@@ -65,30 +61,29 @@
             </div>
             <div v-if="newWorker.hasRecurringDiscount">
               <label for="discountValue" class="form-label">Valor do Desconto (R$):</label>
-              <input v-model.number="newWorker.recurringDiscountValue" type="number" id="discountValue" min="0" step="0.01" class="form-input" placeholder="0,00">
+              <input v-model.number="newWorker.recurringDiscountValue" type="number" min="0" step="0.01" id="discountValue" class="form-input" placeholder="0,00">
             </div>
-            
             <div class="flex items-center pt-2">
               <input v-model="newWorker.active" type="checkbox" id="workerActive" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500">
               <label for="workerActive" class="ml-2 block text-sm text-slate-300">Trabalhador Ativo</label>
             </div>
             <div class="pt-2">
-              <button type="submit" class="btn btn-primary">Salvar</button>
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading">Salvando...</span>
+                <span v-else>Salvar</span>
+              </button>
             </div>
           </form>
         </div>
-
         <div class="card">
           <div class="p-6">
             <h2 class="text-xl font-semibold text-slate-200">Trabalhadores Cadastrados</h2>
           </div>
-          
           <div class="flex flex-col">
             <div class="px-6 py-3 flex text-xs text-slate-400 uppercase bg-slate-900/50 border-t border-slate-700">
               <div class="w-1/2">Trabalhador</div>
               <div class="w-1/2 text-right">Ações</div>
             </div>
-
             <div v-if="workers.length > 0">
               <div v-for="worker in workers" :key="worker._id" class="px-6 py-4 flex flex-col md:flex-row md:items-center border-t border-slate-700 hover:bg-slate-700/50">
                 <div class="w-full md:w-1/2 mb-4 md:mb-0">
@@ -118,7 +113,6 @@
                 </div>
               </div>
             </div>
-            
             <div v-if="workers.length === 0" class="text-center py-10 text-slate-500 border-t border-slate-700">
               Nenhum trabalhador cadastrado.
             </div>
@@ -185,7 +179,7 @@
         </div>
         <div v-if="editingWorker.hasRecurringDiscount">
             <label for="edit_discountValue" class="form-label">Valor do Desconto (R$):</label>
-            <input v-model.number="editingWorker.recurringDiscountValue" type="number" id="edit_discountValue" min="0" step="0.01" class="form-input" placeholder="0,00">
+            <input v-model.number="editingWorker.recurringDiscountValue" type="number" min="0" step="0.01" id="edit_discountValue" class="form-input" placeholder="0,00">
         </div>
         <div class="flex items-center pt-2">
           <input v-model="editingWorker.active" type="checkbox" id="edit_workerActive" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500">
@@ -195,7 +189,10 @@
     </template>
     <template #footer>
       <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateWorker" class="btn btn-primary">Salvar Alterações</button>
+      <button @click="updateWorker" class="btn btn-primary" :disabled="isLoading">
+        <span v-if="isLoading">Salvando...</span>
+        <span v-else>Salvar Alterações</span>
+      </button>
     </template>
   </Modal>
 </template>
@@ -204,20 +201,18 @@
 import { ref, onMounted, watch } from 'vue';
 import api from '@/api.js';
 import Modal from '@/components/Modal.vue';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const workers = ref([]);
 const newWorker = ref({
-  name: '',
-  isRegistered: true,
-  registrationDate: '',
-  childrenCount: 0,
-  semanaDentro: false,
-  hasRecurringDiscount: false,
-  recurringDiscountValue: 0,
-  active: true,
+  name: '', isRegistered: true, registrationDate: '',
+  childrenCount: 0, semanaDentro: false, hasRecurringDiscount: false,
+  recurringDiscountValue: 0, active: true,
 });
 const isModalOpen = ref(false);
 const editingWorker = ref({});
+const isLoading = ref(false);
 
 watch(() => newWorker.value.isRegistered, (isRegistered) => {
   if (!isRegistered) {
@@ -227,7 +222,6 @@ watch(() => newWorker.value.isRegistered, (isRegistered) => {
     newWorker.value.semanaDentro = false;
   }
 });
-
 watch(() => editingWorker.value.isRegistered, (isRegistered) => {
   if (!isRegistered) {
     editingWorker.value.registrationDate = '';
@@ -236,23 +230,12 @@ watch(() => editingWorker.value.isRegistered, (isRegistered) => {
     editingWorker.value.semanaDentro = false;
   }
 });
-
 watch(() => newWorker.value.hasRecurringDiscount, (hasDiscount) => {
-  if (!hasDiscount) {
-    newWorker.value.recurringDiscountValue = 0;
-  }
+  if (!hasDiscount) { newWorker.value.recurringDiscountValue = 0; }
 });
-
 watch(() => editingWorker.value.hasRecurringDiscount, (hasDiscount) => {
-  if (!hasDiscount) {
-    editingWorker.value.recurringDiscountValue = 0;
-  }
+  if (!hasDiscount) { editingWorker.value.recurringDiscountValue = 0; }
 });
-
-const formatCurrency = (value) => {
-  if (typeof value !== 'number') return 'R$ 0,00';
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-};
 
 const formatDateForInput = (dateString) => {
   if (!dateString) return '';
@@ -264,17 +247,22 @@ const fetchWorkers = async () => {
     const response = await api.get('/workers');
     workers.value = response.data;
   } catch (error) {
-    console.error('Erro ao buscar trabalhadores:', error);
+    toast.error('Não foi possível carregar os trabalhadores.');
   }
 };
 
 const addWorker = async () => {
+  isLoading.value = true;
   try {
     await api.post('/workers', newWorker.value);
+    toast.success('Trabalhador adicionado com sucesso!');
     newWorker.value = { name: '', isRegistered: true, registrationDate: '', childrenCount: 0, semanaDentro: false, hasRecurringDiscount: false, recurringDiscountValue: 0, active: true };
     await fetchWorkers();
   } catch (error) {
-    console.error('Erro ao adicionar trabalhador:', error);
+    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível adicionar o trabalhador.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -288,12 +276,17 @@ const openEditModal = (worker) => {
 
 const updateWorker = async () => {
   if (!editingWorker.value._id) return;
+  isLoading.value = true;
   try {
     await api.put(`/workers/${editingWorker.value._id}`, editingWorker.value);
+    toast.success('Trabalhador atualizado com sucesso!');
     isModalOpen.value = false;
     await fetchWorkers();
   } catch (error) {
-    console.error('Erro ao atualizar trabalhador:', error);
+    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível atualizar o trabalhador.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -301,33 +294,26 @@ const deleteWorker = async (id) => {
   if (!confirm('Tem certeza que deseja excluir este trabalhador?')) return;
   try {
     await api.delete(`/workers/${id}`);
+    toast.success('Trabalhador removido com sucesso!');
     await fetchWorkers();
   } catch (error) {
-    console.error('Erro ao deletar trabalhador:', error);
+    toast.error('Não foi possível deletar o trabalhador.');
   }
+};
+
+const formatCurrency = (value) => {
+  if (typeof value !== 'number') return 'R$ 0,00';
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
 onMounted(fetchWorkers);
 </script>
 
 <style scoped>
-/* Estilos para nossas novas tags */
-.tag {
-  @apply px-2 py-0.5 text-xs font-semibold rounded-full;
-}
-.tag-blue {
-  @apply bg-blue-200 text-blue-800;
-}
-.tag-gray {
-  @apply bg-slate-600 text-slate-200;
-}
-.tag-cyan {
-  @apply bg-cyan-200 text-cyan-800;
-}
-.tag-purple {
-  @apply bg-purple-200 text-purple-800;
-}
-.tag-yellow {
-  @apply bg-yellow-200 text-yellow-800;
-}
+.tag { @apply px-2 py-0.5 text-xs font-semibold rounded-full; }
+.tag-blue { @apply bg-blue-200 text-blue-800; }
+.tag-gray { @apply bg-slate-600 text-slate-200; }
+.tag-cyan { @apply bg-cyan-200 text-cyan-800; }
+.tag-purple { @apply bg-purple-200 text-purple-800; }
+.tag-yellow { @apply bg-yellow-200 text-yellow-800; }
 </style>
