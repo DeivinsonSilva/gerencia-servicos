@@ -4,9 +4,11 @@
       <header class="mb-10">
         <h1 class="text-3xl font-bold text-white">Gerenciamento de Usuários</h1>
       </header>
+
       <div v-if="!isAdmin" class="card p-6 text-center">
         <p class="text-amber-400">Você não tem permissão para gerenciar usuários.</p>
       </div>
+
       <main v-else class="space-y-8">
         <div class="card p-6">
           <h2 class="text-xl font-semibold text-slate-200 mb-5">Cadastrar Novo Usuário</h2>
@@ -31,7 +33,10 @@
               </select>
             </div>
             <div class="pt-2">
-              <button type="submit" class="btn btn-primary">Salvar</button>
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading">Salvando...</span>
+                <span v-else>Salvar</span>
+              </button>
             </div>
           </form>
         </div>
@@ -94,7 +99,10 @@
     </template>
     <template #footer>
       <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateUser" class="btn btn-primary">Salvar Alterações</button>
+      <button @click="updateUser" class="btn btn-primary" :disabled="isLoading">
+        <span v-if="isLoading">Salvando...</span>
+        <span v-else>Salvar Alterações</span>
+      </button>
     </template>
   </Modal>
 </template>
@@ -104,12 +112,15 @@ import { ref, onMounted, computed } from 'vue';
 import api from '@/api.js';
 import { jwtDecode } from 'jwt-decode';
 import Modal from '@/components/Modal.vue';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const users = ref([]);
-const newUser = ref({ name: '', login: '', password: '', role: 'Operador' }); // Corrigido de 'type' para 'role'
+const newUser = ref({ name: '', login: '', password: '', role: 'Operador' });
 const isModalOpen = ref(false);
 const editingUser = ref({ _id: null, name: '', login: '', role: '' });
 const currentUser = ref(null);
+const isLoading = ref(false);
 
 const isAdmin = computed(() => currentUser.value && currentUser.value.role === 'Admin');
 
@@ -119,22 +130,22 @@ const fetchUsers = async () => {
     const response = await api.get('/users');
     users.value = response.data;
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
-    alert('Não foi possível carregar os usuários.');
+    toast.error('Não foi possível carregar os usuários.');
   }
 };
 
 const addUser = async () => {
-  if (!newUser.value.name || !newUser.value.login || !newUser.value.password) {
-    return alert('Por favor, preencha todos os campos.');
-  }
+  isLoading.value = true;
   try {
     await api.post('/users/register', newUser.value);
+    toast.success('Usuário adicionado com sucesso!');
     newUser.value = { name: '', login: '', password: '', role: 'Operador' };
     await fetchUsers();
   } catch (error) {
-    console.error('Erro ao adicionar usuário:', error);
-    alert('Não foi possível adicionar o usuário.');
+    const errorMsg = error.response?.data?.msg || 'Não foi possível adicionar o usuário.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -145,24 +156,31 @@ const openEditModal = (user) => {
 
 const updateUser = async () => {
   if (!editingUser.value._id) return;
+  isLoading.value = true;
   try {
     await api.put(`/users/${editingUser.value._id}`, editingUser.value);
+    toast.success('Usuário atualizado com sucesso!');
     isModalOpen.value = false;
     await fetchUsers();
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    alert('Não foi possível atualizar o usuário.');
+    const errorMsg = error.response?.data?.msg || 'Não foi possível atualizar o usuário.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const deleteUser = async (id) => {
+  if (id === currentUser.value?.id) {
+    return toast.error('Você não pode deletar o seu próprio usuário.');
+  }
   if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
   try {
     await api.delete(`/users/${id}`);
+    toast.success('Usuário removido com sucesso!');
     await fetchUsers();
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
-    alert('Não foi possível deletar o usuário.');
+    toast.error('Não foi possível deletar o usuário.');
   }
 };
 

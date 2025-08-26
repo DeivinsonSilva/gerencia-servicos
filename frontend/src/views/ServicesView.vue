@@ -21,7 +21,10 @@
               <label for="serviceActive" class="ml-2 block text-sm text-slate-300">Ativo</label>
             </div>
             <div class="pt-2">
-              <button type="submit" class="btn btn-primary">Salvar</button>
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading">Salvando...</span>
+                <span v-else>Salvar</span>
+              </button>
             </div>
           </form>
         </div>
@@ -83,7 +86,10 @@
     </template>
     <template #footer>
       <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateService" class="btn btn-primary">Salvar Alterações</button>
+      <button @click="updateService" class="btn btn-primary" :disabled="isLoading">
+        <span v-if="isLoading">Salvando...</span>
+        <span v-else>Salvar Alterações</span>
+      </button>
     </template>
   </Modal>
 
@@ -93,11 +99,14 @@
 import { ref, onMounted } from 'vue';
 import api from '@/api.js';
 import Modal from '@/components/Modal.vue';
+import { useToast } from 'vue-toastification'; // <-- IMPORTA O TOAST
 
+const toast = useToast(); // <-- INICIA O TOAST
 const services = ref([]);
 const newService = ref({ name: '', price: null, active: true });
 const isModalOpen = ref(false);
 const editingService = ref({ _id: null, name: '', price: null, active: true });
+const isLoading = ref(false); // <-- VARIÁVEL PARA O FEEDBACK DE CARREGAMENTO
 
 const formatCurrency = (value) => {
   if (typeof value !== 'number') return 'R$ 0,00';
@@ -110,21 +119,23 @@ const fetchServices = async () => {
     services.value = response.data;
   } catch (error) {
     console.error('Erro ao buscar serviços:', error);
-    alert('Não foi possível carregar os serviços.');
+    toast.error('Não foi possível carregar os serviços.');
   }
 };
 
 const addService = async () => {
-  if (!newService.value.name || newService.value.price === null) {
-    return alert('Por favor, preencha o nome e o preço.');
-  }
+  isLoading.value = true;
   try {
     await api.post('/services', newService.value);
+    toast.success('Serviço adicionado com sucesso!');
     newService.value = { name: '', price: null, active: true };
     await fetchServices();
   } catch (error) {
     console.error('Erro ao adicionar serviço:', error);
-    alert('Não foi possível adicionar o serviço.');
+    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível adicionar o serviço.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -135,13 +146,18 @@ const openEditModal = (service) => {
 
 const updateService = async () => {
   if (!editingService.value._id) return;
+  isLoading.value = true;
   try {
     await api.put(`/services/${editingService.value._id}`, editingService.value);
+    toast.success('Serviço atualizado com sucesso!');
     isModalOpen.value = false;
     await fetchServices();
   } catch (error) {
     console.error('Erro ao atualizar serviço:', error);
-    alert('Não foi possível atualizar o serviço.');
+    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível atualizar o serviço.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -149,10 +165,11 @@ const deleteService = async (id) => {
   if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
   try {
     await api.delete(`/services/${id}`);
+    toast.success('Serviço removido com sucesso!');
     await fetchServices();
   } catch (error) {
     console.error('Erro ao deletar serviço:', error);
-    alert('Não foi possível deletar o serviço.');
+    toast.error('Não foi possível deletar o serviço.');
   }
 };
 

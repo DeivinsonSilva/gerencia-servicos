@@ -128,7 +128,9 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import api from '@/api.js';
 import { usePayslipExporter } from '@/composables/usePayslipExporter.js';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const { generatePDF, generateExcel } = usePayslipExporter();
 
 const getMonthDateRange = () => {
@@ -195,7 +197,7 @@ const setFilter = (type) => {
 
 const generatePayslip = async () => {
   if (!filters.value.startDate || !filters.value.endDate) {
-    return alert('Por favor, selecione a data de início e fim.');
+    return toast.warning('Por favor, selecione a data de início e fim.');
   }
   isLoading.value = true;
   payslipData.value = [];
@@ -207,9 +209,14 @@ const generatePayslip = async () => {
         saldo: 0,
         desconto: 0,
     }));
+    if (payslipData.value.length > 0) {
+        toast.success('Folha de pagamento gerada com sucesso!');
+    } else {
+        toast.info('Nenhum registro encontrado para os filtros selecionados.');
+    }
   } catch (error) {
     console.error("Erro ao gerar folha de pagamento:", error);
-    alert(error.response?.data?.msg || "Não foi possível gerar a folha de pagamento.");
+    toast.error(error.response?.data?.msg || "Não foi possível gerar a folha de pagamento.");
   } finally {
     isLoading.value = false;
   }

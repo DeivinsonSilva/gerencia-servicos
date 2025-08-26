@@ -61,7 +61,6 @@
                       <option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option>
                     </select>
                   </div>
-
                   <div>
                     <label for="serviceSelect" class="form-label">Serviço:</label>
                     <select v-model="newLog.service" @change="updatePrice" id="serviceSelect" class="form-select">
@@ -69,12 +68,10 @@
                       <option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option>
                     </select>
                   </div>
-
                   <div>
                     <label for="production" class="form-label">Produção:</label>
                     <input v-model.number="newLog.production" type="number" id="production" class="form-input">
                   </div>
-
                   <div>
                     <label for="unitPrice" class="form-label">Preço (R$):</label>
                     <input v-model.number="newLog.unitPrice" type="number" step="0.01" id="unitPrice" class="form-input">
@@ -82,7 +79,10 @@
                 </div>
 
                 <div class="pt-2">
-                  <button type="submit" class="w-full btn btn-primary">Adicionar à Lista</button>
+                  <button type="submit" class="w-full btn btn-primary" :disabled="isLoading">
+                    <span v-if="isLoading">Adicionando...</span>
+                    <span v-else>Adicionar à Lista</span>
+                  </button>
                 </div>
               </form>
             </div>
@@ -95,24 +95,11 @@
           </div>
           <div class="table-container">
             <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Trabalhador</th>
-                  <th>Status</th>
-                  <th>Fazenda</th>
-                  <th>Serviço/Motivo</th>
-                  <th>Produção</th>
-                  <th>Preço Unit.</th>
-                  <th>Total</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Trabalhador</th><th>Status</th><th>Fazenda</th><th>Serviço/Motivo</th><th>Produção</th><th>Preço Unit.</th><th>Total</th><th>Ações</th></tr></thead>
               <tbody>
                 <tr v-for="log in workLogs" :key="log._id">
                   <td class="font-medium text-white">{{ log.worker.name }}</td>
-                  <td>
-                     <span :class="log.status === 'Presente' ? 'text-green-400' : 'text-red-400'">{{ log.status }}</span>
-                  </td>
+                  <td><span :class="log.status === 'Presente' ? 'text-green-400' : 'text-red-400'">{{ log.status }}</span></td>
                   <td>{{ log.farm?.name || 'N/A' }}</td>
                   <td>{{ log.service?.name || 'N/A' }}</td>
                   <td>{{ log.status === 'Presente' ? log.production : 'N/A' }}</td>
@@ -123,9 +110,7 @@
                     <button @click="deleteWorkLog(log._id)" class="font-medium text-white bg-red-600 hover:bg-red-500 px-3 py-1 rounded-md text-xs transition-colors">Remover</button>
                   </td>
                 </tr>
-                <tr v-if="workLogs.length === 0">
-                  <td colspan="8" class="text-center py-10 text-slate-500">Nenhum registro para esta data.</td>
-                </tr>
+                <tr v-if="workLogs.length === 0"><td colspan="8" class="text-center py-10 text-slate-500">Nenhum registro para esta data.</td></tr>
               </tbody>
             </table>
           </div>
@@ -138,41 +123,22 @@
     <template #header>Editar Lançamento</template>
     <template #body>
       <form v-if="editingLog._id" @submit.prevent="updateWorkLog" class="space-y-4">
-        <div>
-          <label class="form-label">Trabalhador:</label>
-          <p class="font-semibold text-white mt-1">{{ editingLog.workerName }}</p>
-        </div>
-        <div class="flex items-center">
-          <input v-model="editingIsAbsent" type="checkbox" id="edit_markAbsent" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500">
-          <label for="edit_markAbsent" class="ml-2 block text-sm text-slate-300">Marcar como Falta</label>
-        </div>
+        <div><label class="form-label">Trabalhador:</label><p class="font-semibold text-white mt-1">{{ editingLog.workerName }}</p></div>
+        <div class="flex items-center"><input v-model="editingIsAbsent" type="checkbox" id="edit_markAbsent" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500"><label for="edit_markAbsent" class="ml-2 block text-sm text-slate-300">Marcar como Falta</label></div>
         <div v-if="!editingIsAbsent" class="space-y-4">
-          <div>
-            <label for="edit_farmSelect" class="form-label">Fazenda:</label>
-            <select v-model="editingLog.farm" id="edit_farmSelect" class="form-select">
-              <option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label for="edit_serviceSelect" class="form-label">Serviço:</label>
-            <select v-model="editingLog.service" id="edit_serviceSelect" class="form-select">
-              <option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label for="edit_production" class="form-label">Produção:</label>
-            <input v-model.number="editingLog.production" type="number" id="edit_production" class="form-input">
-          </div>
-          <div>
-            <label for="edit_unitPrice" class="form-label">Preço (R$):</label>
-            <input v-model.number="editingLog.unitPrice" type="number" step="0.01" id="edit_unitPrice" class="form-input">
-          </div>
+          <div><label for="edit_farmSelect" class="form-label">Fazenda:</label><select v-model="editingLog.farm" id="edit_farmSelect" class="form-select"><option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option></select></div>
+          <div><label for="edit_serviceSelect" class="form-label">Serviço:</label><select v-model="editingLog.service" id="edit_serviceSelect" class="form-select"><option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option></select></div>
+          <div><label for="edit_production" class="form-label">Produção:</label><input v-model.number="editingLog.production" type="number" id="edit_production" class="form-input"></div>
+          <div><label for="edit_unitPrice" class="form-label">Preço (R$):</label><input v-model.number="editingLog.unitPrice" type="number" step="0.01" id="edit_unitPrice" class="form-input"></div>
         </div>
       </form>
     </template>
     <template #footer>
       <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateWorkLog" class="btn btn-primary">Salvar Alterações</button>
+      <button @click="updateWorkLog" class="btn btn-primary" :disabled="isLoading">
+        <span v-if="isLoading">Salvando...</span>
+        <span v-else>Salvar Alterações</span>
+      </button>
     </template>
   </Modal>
 </template>
@@ -181,23 +147,20 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import api from '@/api.js';
 import Modal from '@/components/Modal.vue';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const workers = ref([]);
 const farms = ref([]);
 const services = ref([]);
 const workLogs = ref([]);
 const selectedDate = ref('');
 const isAbsent = ref(false);
-const newLog = ref({
-  worker: '',
-  farm: '',
-  service: '',
-  status: 'Presente',
-  production: 0,
-  unitPrice: 0,
-});
+const newLog = ref({ worker: '', farm: '', service: '', status: 'Presente', production: 0, unitPrice: 0 });
 const isModalOpen = ref(false);
 const editingLog = ref({});
+const isLoading = ref(false);
+
 const editingIsAbsent = computed({
   get: () => editingLog.value.status === 'Falta',
   set: (value) => {
@@ -209,19 +172,15 @@ const editingIsAbsent = computed({
 
 watch(isAbsent, (isMarkedAsAbsent) => {
   if (isMarkedAsAbsent) {
-    newLog.value.farm = '';
-    newLog.value.service = '';
-    newLog.value.production = 0;
-    newLog.value.unitPrice = 0;
+    newLog.value.farm = ''; newLog.value.service = '';
+    newLog.value.production = 0; newLog.value.unitPrice = 0;
   }
 });
 
 watch(() => editingLog.value.service, (newServiceId) => {
-  if (newServiceId && services.value.length > 0 && !editingIsAbsent.value) {
+  if (newServiceId && services.value.length > 0 && editingLog.value.status !== 'Falta') {
     const selectedService = services.value.find(s => s._id === newServiceId);
-    if (selectedService) {
-      editingLog.value.unitPrice = selectedService.price;
-    }
+    if (selectedService) editingLog.value.unitPrice = selectedService.price;
   }
 });
 
@@ -233,40 +192,37 @@ const formatCurrency = (value) => {
 const fetchInitialData = async () => {
   try {
     const [workersRes, farmsRes, servicesRes] = await Promise.all([
-      api.get('/workers'),
-      api.get('/farms'),
-      api.get('/services')
+      api.get('/workers'), api.get('/farms'), api.get('/services')
     ]);
     workers.value = workersRes.data;
     farms.value = farmsRes.data;
     services.value = servicesRes.data;
   } catch (error) {
-    console.error("Erro ao buscar dados iniciais:", error);
+    toast.error("Não foi possível carregar os dados de cadastros.");
   }
 };
 
 const fetchWorkLogs = async () => {
-  if (!selectedDate.value) {
-    workLogs.value = [];
-    return;
-  }
+  if (!selectedDate.value) { workLogs.value = []; return; }
+  isLoading.value = true;
   try {
-    // A API agora retorna um objeto, pegamos os logs de dentro dele
     const response = await api.get(`/worklogs?date=${selectedDate.value}`);
     workLogs.value = response.data.logs;
   } catch (error) {
-    console.error(`Erro ao buscar registros para a data ${selectedDate.value}:`, error);
+    toast.error(`Não foi possível buscar os registros para esta data.`);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const addWorkLog = async () => {
-  if (!newLog.value.worker) {
-    return alert('Por favor, selecione um trabalhador.');
-  }
+  if (!newLog.value.worker) return toast.warning('Por favor, selecione um trabalhador.');
   const isAbsentValue = isAbsent.value;
   if (!isAbsentValue && (!newLog.value.farm || !newLog.value.service)) {
-    return alert('Por favor, selecione a fazenda e o serviço para um registro de presença.');
+    return toast.warning('Por favor, selecione a fazenda e o serviço.');
   }
+  
+  isLoading.value = true;
   try {
     const logData = {
       date: selectedDate.value,
@@ -274,46 +230,53 @@ const addWorkLog = async () => {
       status: isAbsentValue ? 'Falta' : 'Presente',
     };
     if (!isAbsentValue) {
-      logData.farm = newLog.value.farm;
-      logData.service = newLog.value.service;
-      logData.production = newLog.value.production;
-      logData.unitPrice = newLog.value.unitPrice;
+      logData.farm = newLog.value.farm; logData.service = newLog.value.service;
+      logData.production = newLog.value.production; logData.unitPrice = newLog.value.unitPrice;
     }
     await api.post('/worklogs', logData);
+    toast.success('Registro adicionado com sucesso!');
     newLog.value = { worker: '', farm: '', service: '', status: 'Presente', production: 0, unitPrice: 0 };
     isAbsent.value = false;
     await fetchWorkLogs();
   } catch (error) {
-    console.error("Erro ao adicionar registro:", error);
-    alert(error.response?.data?.msg || 'Não foi possível adicionar o registro.');
+    toast.error(error.response?.data?.msg || 'Não foi possível adicionar o registro.');
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const updateWorkLog = async () => {
   if (!editingLog.value._id) return;
+  isLoading.value = true;
   try {
     const payload = {
-      farm: editingLog.value.farm,
-      service: editingLog.value.service,
+      farm: editingLog.value.farm, service: editingLog.value.service,
       status: editingLog.value.status,
       production: editingLog.value.status === 'Falta' ? 0 : editingLog.value.production,
       unitPrice: editingLog.value.unitPrice,
     };
     await api.put(`/worklogs/${editingLog.value._id}`, payload);
+    toast.success('Registro atualizado com sucesso!');
     isModalOpen.value = false;
     await fetchWorkLogs();
   } catch (error) {
-    console.error("Erro ao atualizar registro:", error);
+    toast.error('Não foi possível atualizar o registro.');
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const deleteWorkLog = async (id) => {
   if (!confirm('Tem certeza que deseja remover este registro?')) return;
+  isLoading.value = true;
   try {
     await api.delete(`/worklogs/${id}`);
+    toast.success('Registro removido com sucesso!');
     await fetchWorkLogs();
   } catch (error) {
-    console.error("Erro ao deletar registro:", error);
+    toast.error('Não foi possível remover o registro.');
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -347,9 +310,7 @@ const availableWorkers = computed(() => {
   return workers.value.filter(worker => !loggedWorkerIds.includes(worker._id));
 });
 
-onMounted(async () => {
-  await fetchInitialData();
-});
+onMounted(fetchInitialData);
 </script>
 
 <style scoped>
