@@ -25,7 +25,10 @@
               <label for="farmActive" class="ml-2 block text-sm text-slate-300">Ativa</label>
             </div>
             <div class="pt-2">
-              <button type="submit" class="btn btn-primary">Salvar</button>
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <span v-if="isLoading">Salvando...</span>
+                <span v-else>Salvar</span>
+              </button>
             </div>
           </form>
         </div>
@@ -93,7 +96,10 @@
     </template>
     <template #footer>
       <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateFarm" class="btn btn-primary">Salvar Alterações</button>
+      <button @click="updateFarm" class="btn btn-primary" :disabled="isLoading">
+        <span v-if="isLoading">Salvando...</span>
+        <span v-else>Salvar Alterações</span>
+      </button>
     </template>
   </Modal>
 
@@ -101,35 +107,38 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '@/api.js'; // Importamos nossa nova instância do axios
+import api from '@/api.js';
 import Modal from '@/components/Modal.vue';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const farms = ref([]);
 const newFarm = ref({ name: '', owner: '', city: '', active: true });
 const isModalOpen = ref(false);
 const editingFarm = ref({ _id: null, name: '', owner: '', city: '', active: true });
+const isLoading = ref(false);
 
 const fetchFarms = async () => {
   try {
-    const response = await api.get('/farms'); // Usamos 'api' e o caminho relativo
+    const response = await api.get('/farms');
     farms.value = response.data;
   } catch (error) {
-    console.error('Erro ao buscar fazendas:', error);
-    alert('Não foi possível carregar as fazendas.');
+    toast.error('Não foi possível carregar as fazendas.');
   }
 };
 
 const addFarm = async () => {
-  if (!newFarm.value.name || !newFarm.value.owner || !newFarm.value.city) {
-    return alert('Por favor, preencha todos os campos.');
-  }
+  isLoading.value = true;
   try {
     await api.post('/farms', newFarm.value);
+    toast.success('Fazenda adicionada com sucesso!');
     newFarm.value = { name: '', owner: '', city: '', active: true };
     await fetchFarms();
   } catch (error) {
-    console.error('Erro ao adicionar fazenda:', error);
-    alert('Não foi possível adicionar a fazenda.');
+    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível adicionar a fazenda.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -140,13 +149,17 @@ const openEditModal = (farm) => {
 
 const updateFarm = async () => {
   if (!editingFarm.value._id) return;
+  isLoading.value = true;
   try {
     await api.put(`/farms/${editingFarm.value._id}`, editingFarm.value);
+    toast.success('Fazenda atualizada com sucesso!');
     isModalOpen.value = false;
     await fetchFarms();
   } catch (error) {
-    console.error('Erro ao atualizar fazenda:', error);
-    alert('Não foi possível atualizar a fazenda.');
+    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível atualizar a fazenda.';
+    toast.error(errorMsg);
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -154,10 +167,10 @@ const deleteFarm = async (id) => {
   if (!confirm('Tem certeza que deseja excluir esta fazenda?')) return;
   try {
     await api.delete(`/farms/${id}`);
+    toast.success('Fazenda removida com sucesso!');
     await fetchFarms();
   } catch (error) {
-    console.error('Erro ao deletar fazenda:', error);
-    alert('Não foi possível deletar a fazenda.');
+    toast.error('Não foi possível deletar a fazenda.');
   }
 };
 
