@@ -15,11 +15,13 @@ const app = express();
 
 // --- Configuração de Middlewares ---
 
-// 1. Configuração de CORS (Cross-Origin Resource Sharing)
-// Define quais domínios externos podem fazer requisições para esta API
+// Pega a string de URLs do ambiente (ex: "url1.com,url2.com")
+// e a transforma em um array ["url1.com", "url2.com"]
+const allowedProdUrls = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+
 const allowedOrigins = [
-    'http://localhost:5173',      // Permite o acesso do seu ambiente de desenvolvimento local
-    process.env.FRONTEND_URL      // Permite o acesso da sua URL de produção (definida na Vercel)
+    'http://localhost:5173', // Sempre permite o ambiente de desenvolvimento
+    ...allowedProdUrls      // Adiciona todas as URLs de produção da variável de ambiente
 ];
 
 const corsOptions = {
