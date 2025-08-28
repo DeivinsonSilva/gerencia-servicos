@@ -35,7 +35,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '@/api.js'; // Importamos nossa nova instância do axios
+import api from '@/api.js'; // Importamos nossa nova instância do axios -->
 import { login } from '@/data/store.js';
 
 const router = useRouter();
