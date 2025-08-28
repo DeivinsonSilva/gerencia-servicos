@@ -124,7 +124,8 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 // @route   POST /api/users/change-password
-// @desc    Alterar a própria senha
+// @desc    Alterar a senha do usuário logado
+// @access  Privado (qualquer usuário logado)
 router.post('/change-password',
   [
     auth,
@@ -132,49 +133,28 @@ router.post('/change-password',
     check('newPassword', 'A nova senha deve ter no mínimo 6 caracteres').isLength({ min: 6 })
   ],
   async (req, res) => {
-    // ... (código existente, sem alterações)
-  }
-);
-
-// --- NOVA ROTA PARA RESET DE SENHA PELO ADMIN ---
-// @route   PUT /api/users/:id/reset-password
-// @desc    Admin reseta a senha de um usuário
-// @access  Admin
-router.put('/:id/reset-password',
-  [
-    auth,
-    check('newPassword', 'A nova senha deve ter no mínimo 6 caracteres').isLength({ min: 6 })
-  ],
-  async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ msg: 'Acesso negado: somente admins podem resetar senhas.' });
-    }
-
     try {
-      const { newPassword } = req.body;
-      const user = await User.findById(req.params.id);
-
+      const { currentPassword, newPassword } = req.body;
+      const user = await User.findById(req.user.id);
       if (!user) {
         return res.status(404).json({ msg: 'Usuário não encontrado.' });
       }
-
-      // O hook 'pre-save' no Model User.js irá hashear a nova senha automaticamente
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ errors: [{ msg: 'A senha atual está incorreta.' }] });
+      }
       user.password = newPassword;
       await user.save();
-
-      res.json({ msg: `Senha do usuário ${user.name} foi resetada com sucesso!` });
-
+      res.json({ msg: 'Senha alterada com sucesso!' });
     } catch (err) {
-      console.error('Erro ao resetar senha:', err.message);
+      console.error('Erro ao alterar senha:', err.message);
       res.status(500).send('Erro no Servidor');
     }
   }
 );
-
 
 module.exports = router;

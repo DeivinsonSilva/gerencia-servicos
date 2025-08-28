@@ -59,10 +59,8 @@
                   <td class="font-medium text-white">{{ user.name }}</td>
                   <td>{{ user.login }}</td>
                   <td>{{ user.role }}</td>
-                  <td class="flex items-center gap-2 flex-wrap">
+                  <td class="flex items-center gap-2">
                     <button @click="openEditModal(user)" class="font-medium text-white bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-md text-xs transition-colors">Editar</button>
-                    <!-- NOVO BOTÃO DE RESET -->
-                    <button @click="openResetModal(user)" class="font-medium text-white bg-sky-600 hover:bg-sky-500 px-3 py-1 rounded-md text-xs transition-colors">Resetar Senha</button>
                     <button @click="deleteUser(user._id)" class="font-medium text-white bg-red-600 hover:bg-red-500 px-3 py-1 rounded-md text-xs transition-colors">Excluir</button>
                   </td>
                 </tr>
@@ -77,8 +75,7 @@
     </div>
   </div>
 
-  <!-- Modal de Edição (Existente) -->
-  <Modal :show="isEditModalOpen" @close="isEditModalOpen = false">
+  <Modal :show="isModalOpen" @close="isModalOpen = false">
     <template #header>Editar Usuário</template>
     <template #body>
       <form @submit.prevent="updateUser" class="space-y-4">
@@ -101,41 +98,13 @@
       </form>
     </template>
     <template #footer>
-      <button @click="isEditModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
+      <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
       <button @click="updateUser" class="btn btn-primary" :disabled="isLoading">
         <span v-if="isLoading">Salvando...</span>
         <span v-else>Salvar Alterações</span>
       </button>
     </template>
   </Modal>
-
-  <!-- NOVO MODAL PARA RESET DE SENHA -->
-  <Modal :show="isResetModalOpen" @close="isResetModalOpen = false">
-    <template #header>Resetar Senha</template>
-    <template #body>
-        <p v-if="userToReset" class="text-slate-300 mb-4">
-            Você está definindo uma nova senha para o usuário: <strong class="text-white">{{ userToReset.name }}</strong>.
-        </p>
-        <form @submit.prevent="handleResetPassword" class="space-y-4">
-            <div>
-                <label for="newPasswordReset" class="form-label">Nova Senha Temporária:</label>
-                <input v-model="newPassword" type="password" id="newPasswordReset" class="form-input" autocomplete="new-password">
-            </div>
-            <div>
-                <label for="confirmNewPasswordReset" class="form-label">Confirmar Nova Senha:</label>
-                <input v-model="confirmNewPassword" type="password" id="confirmNewPasswordReset" class="form-input" autocomplete="new-password">
-            </div>
-        </form>
-    </template>
-    <template #footer>
-        <button @click="isResetModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-        <button @click="handleResetPassword" class="btn btn-primary" :disabled="isLoading">
-            <span v-if="isLoading">Salvando...</span>
-            <span v-else>Salvar Nova Senha</span>
-        </button>
-    </template>
-  </Modal>
-
 </template>
 
 <script setup>
@@ -148,17 +117,10 @@ import { useToast } from 'vue-toastification';
 const toast = useToast();
 const users = ref([]);
 const newUser = ref({ name: '', login: '', password: '', role: 'Operador' });
-const isEditModalOpen = ref(false);
+const isModalOpen = ref(false);
 const editingUser = ref({ _id: null, name: '', login: '', role: '' });
 const currentUser = ref(null);
 const isLoading = ref(false);
-
-// --- NOVAS VARIÁVEIS PARA O RESET DE SENHA ---
-const isResetModalOpen = ref(false);
-const userToReset = ref(null);
-const newPassword = ref('');
-const confirmNewPassword = ref('');
-// --- FIM DAS NOVAS VARIÁVEIS ---
 
 const isAdmin = computed(() => currentUser.value && currentUser.value.role === 'Admin');
 
@@ -180,7 +142,7 @@ const addUser = async () => {
     newUser.value = { name: '', login: '', password: '', role: 'Operador' };
     await fetchUsers();
   } catch (error) {
-    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível adicionar o usuário.';
+    const errorMsg = error.response?.data?.msg || 'Não foi possível adicionar o usuário.';
     toast.error(errorMsg);
   } finally {
     isLoading.value = false;
@@ -189,7 +151,7 @@ const addUser = async () => {
 
 const openEditModal = (user) => {
   editingUser.value = { ...user };
-  isEditModalOpen.value = true;
+  isModalOpen.value = true;
 };
 
 const updateUser = async () => {
@@ -198,10 +160,10 @@ const updateUser = async () => {
   try {
     await api.put(`/users/${editingUser.value._id}`, editingUser.value);
     toast.success('Usuário atualizado com sucesso!');
-    isEditModalOpen.value = false;
+    isModalOpen.value = false;
     await fetchUsers();
   } catch (error) {
-    const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível atualizar o usuário.';
+    const errorMsg = error.response?.data?.msg || 'Não foi possível atualizar o usuário.';
     toast.error(errorMsg);
   } finally {
     isLoading.value = false;
@@ -221,40 +183,6 @@ const deleteUser = async (id) => {
     toast.error('Não foi possível deletar o usuário.');
   }
 };
-
-// --- NOVAS FUNÇÕES PARA O RESET DE SENHA ---
-const openResetModal = (user) => {
-    userToReset.value = user;
-    newPassword.value = '';
-    confirmNewPassword.value = '';
-    isResetModalOpen.value = true;
-};
-
-const handleResetPassword = async () => {
-    if (!userToReset.value) return;
-
-    if (newPassword.value !== confirmNewPassword.value) {
-        return toast.error('As senhas não correspondem.');
-    }
-    if (newPassword.value.length < 6) {
-        return toast.error('A nova senha deve ter no mínimo 6 caracteres.');
-    }
-
-    isLoading.value = true;
-    try {
-        const response = await api.put(`/users/${userToReset.value._id}/reset-password`, {
-            newPassword: newPassword.value
-        });
-        toast.success(response.data.msg);
-        isResetModalOpen.value = false;
-    } catch (error) {
-        const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível resetar a senha.';
-        toast.error(errorMsg);
-    } finally {
-        isLoading.value = false;
-    }
-};
-// --- FIM DAS NOVAS FUNÇÕES ---
 
 onMounted(() => {
   const token = localStorage.getItem('authToken');
