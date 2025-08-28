@@ -101,7 +101,7 @@ import api from '@/api.js';
 import Modal from '@/components/Modal.vue';
 import { useToast } from 'vue-toastification'; // <-- IMPORTA O TOAST
 
-const toast = useToast(); // <-- INICIA O TOAST
+const toast = useToast(); // <-- INICIA O TOAST isso é importante
 const services = ref([]);
 const newService = ref({ name: '', price: null, active: true });
 const isModalOpen = ref(false);
