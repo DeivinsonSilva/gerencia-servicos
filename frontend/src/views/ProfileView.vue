@@ -70,7 +70,7 @@ const changePassword = async () => {
     const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível alterar a senha.';
     toast.error(errorMsg);
   } finally {
-    // A CORREÇÃO ESTÁ AQUI
+    // A CORREÇÃO ESTÁ AQUI tá ok
     // Este bloco é executado sempre, tanto em caso de sucesso quanto de erro.
     isLoading.value = false;
   }
