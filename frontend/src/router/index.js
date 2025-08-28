@@ -41,7 +41,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  // --- A CORREÇÃO ESTÁ AQUI ---
+  // --- A CORREÇÃO ESTÁ AQUI --- Nesse contexto.
   history: createWebHistory(), // Removido o argumento 'import.meta.url'
   routes
 });
