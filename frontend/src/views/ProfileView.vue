@@ -22,7 +22,7 @@
               <label for="confirmPassword" class="form-label">Confirmar Nova Senha:</label>
               <input v-model="passwords.confirmPassword" type="password" id="confirmPassword" class="form-input" autocomplete="new-password">
             </div>
-
+            
             <div class="pt-2">
               <button type="submit" class="btn btn-primary" :disabled="isLoading">
                 <span v-if="isLoading">Salvando...</span>
@@ -50,7 +50,6 @@ const passwords = ref({
 });
 
 const changePassword = async () => {
-  // Validação no front-end para uma melhor UX
   if (passwords.value.newPassword !== passwords.value.confirmPassword) {
     return toast.error('A nova senha e a confirmação não correspondem.');
   }
@@ -66,12 +65,13 @@ const changePassword = async () => {
     };
     const response = await api.post('/users/change-password', payload);
     toast.success(response.data.msg || 'Senha alterada com sucesso!');
-    // Limpa os campos após o sucesso
     passwords.value = { currentPassword: '', newPassword: '', confirmPassword: '' };
   } catch (error) {
     const errorMsg = error.response?.data?.errors?.[0]?.msg || 'Não foi possível alterar a senha.';
     toast.error(errorMsg);
   } finally {
+    // A CORREÇÃO ESTÁ AQUI tá ok
+    // Este bloco é executado sempre, tanto em caso de sucesso quanto de erro.
     isLoading.value = false;
   }
 };
