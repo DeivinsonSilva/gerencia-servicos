@@ -76,7 +76,7 @@ router.beforeEach((to, from, next) => {
                 }
             } catch (e) {
                 console.error("Token inválido ou expirado:", e);
-                // Se o token for inválido, limpa e redireciona para o login
+                // Se o token for inválido, limpa e redireciona para o login. coment
                 localStorage.removeItem('authToken');
                 return next({ name: 'login' });
             }
