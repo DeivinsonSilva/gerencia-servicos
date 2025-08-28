@@ -1,8 +1,7 @@
+// frontend/src/api.js
 import axios from 'axios';
 
 const api = axios.create({
-  // Em produção, ele usará a variável que configuramos na Vercel.
-  // Localmente, ele usará a variável do seu .env.development.
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
 });
 

@@ -1,4 +1,3 @@
-// backend/api/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -8,8 +7,28 @@ connectDB();
 
 const app = express();
 
-// Habilita o CORS para todas as origens. Essencial para o deploy.
-app.use(cors());
+// --- CONFIGURAÇÃO DE CORS PARA PRODUÇÃO ---
+// Lista de domínios que têm permissão para acessar sua API
+const allowedOrigins = [
+  'https://gerencia-servicos.vercel.app', // Sua URL de produção do front-end
+  'http://localhost:5173' // A URL do seu ambiente de desenvolvimento local
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permite requisições sem 'origin' (como do Insomnia ou apps mobile) ou se a origem estiver na lista
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pela política de CORS'));
+    }
+  }
+};
+
+// Usa as opções de CORS
+app.use(cors(corsOptions));
+// --- FIM DA CONFIGURAÇÃO DE CORS ---
+
 
 app.use(express.json());
 
