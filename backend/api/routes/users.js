@@ -1,7 +1,8 @@
+// backend/api/routes/users.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const auth = require('../../middleware/auth');
+const { protect, authorize } = require('../../middleware/auth'); // <-- 1. IMPORTAÇÃO CORRETA
 const User = require('../../models/User');
 const { check, validationResult } = require('express-validator');
 
@@ -9,7 +10,8 @@ const { check, validationResult } = require('express-validator');
 // @desc    Registrar um novo usuário (Admin)
 router.post('/register',
   [
-    auth,
+    protect, // <-- 2. USA O 'protect'
+    authorize('Admin'), // <-- 3. USA O 'authorize' PARA GARANTIR QUE É ADMIN
     check('name', 'O nome é obrigatório').not().isEmpty(),
     check('login', 'O login é obrigatório').not().isEmpty(),
     check('password', 'A senha deve ter no mínimo 6 caracteres').isLength({ min: 6 }),
@@ -19,10 +21,8 @@ router.post('/register',
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ msg: 'Acesso negado: somente admins podem registrar novos usuários.' });
-    }
+    
+    // A checagem de 'Admin' agora é feita pelo middleware 'authorize'
 
     const { name, login, password, role } = req.body;
     try {
@@ -45,11 +45,9 @@ router.post('/register',
 
 // @route   GET /api/users
 // @desc    Obter todos os usuários (Admin)
-router.get('/', auth, async (req, res) => {
+router.get('/', [protect, authorize('Admin')], async (req, res) => {
   try {
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ msg: 'Acesso negado: somente admins.' });
-    }
+    // A checagem de 'Admin' agora é feita pelo middleware
     const users = await User.find().select('-password').sort({ name: 1 });
     res.json(users);
   } catch (err) {
@@ -62,7 +60,8 @@ router.get('/', auth, async (req, res) => {
 // @desc    Atualizar (editar) um usuário (Admin)
 router.put('/:id',
   [
-    auth,
+    protect,
+    authorize('Admin'),
     check('name', 'O nome é obrigatório').not().isEmpty(),
     check('login', 'O login é obrigatório').not().isEmpty(),
     check('role', 'A permissão é obrigatória').isIn(['Admin', 'Operador'])
@@ -72,9 +71,7 @@ router.put('/:id',
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ msg: 'Acesso negado: somente admins.' });
-    }
+    // A checagem de 'Admin' agora é feita pelo middleware
     const { name, login, role } = req.body;
     const userFields = { name, login, role };
     try {
@@ -103,11 +100,9 @@ router.put('/:id',
 
 // @route   DELETE /api/users/:id
 // @desc    Deletar um usuário (Admin)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', [protect, authorize('Admin')], async (req, res) => {
   try {
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ msg: 'Acesso negado: somente admins.' });
-    }
+    // A checagem de 'Admin' agora é feita pelo middleware
     if (req.user.id === req.params.id) {
         return res.status(400).json({ msg: 'Você não pode deletar seu próprio usuário.' });
     }
@@ -128,7 +123,7 @@ router.delete('/:id', auth, async (req, res) => {
 // @access  Privado (qualquer usuário logado)
 router.post('/change-password',
   [
-    auth,
+    protect, // <-- AQUI SÓ PRECISA DO 'protect', POIS QUALQUER USUÁRIO PODE MUDAR A PRÓPRIA SENHA
     check('currentPassword', 'A senha atual é obrigatória').not().isEmpty(),
     check('newPassword', 'A nova senha deve ter no mínimo 6 caracteres').isLength({ min: 6 })
   ],

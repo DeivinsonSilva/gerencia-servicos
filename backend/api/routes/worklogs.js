@@ -1,12 +1,12 @@
 // backend/api/routes/worklogs.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
 const WorkLog = require('../../models/WorkLog');
 
 // @route   POST /api/worklogs
 // @desc    Criar um novo registro de trabalho
-router.post('/', auth, async (req, res) => {
+router.post('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   const { date, worker, farm, service, status, production, unitPrice } = req.body;
 
   if (status === 'Presente' && (!farm || !service)) {
@@ -38,7 +38,7 @@ router.post('/', auth, async (req, res) => {
 
 // @route   GET /api/worklogs
 // @desc    Obter registros de trabalho com filtros e paginação
-router.get('/', auth, async (req, res) => {
+router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     const { date, month, page = 1, limit = 10 } = req.query;
     
@@ -86,7 +86,7 @@ router.get('/', auth, async (req, res) => {
 
 // @route   PUT /api/worklogs/:id
 // @desc    Atualizar um registro de trabalho
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   const { farm, service, status, production, unitPrice } = req.body;
   try {
     let workLog = await WorkLog.findById(req.params.id);
@@ -117,7 +117,7 @@ router.put('/:id', auth, async (req, res) => {
 
 // @route   DELETE /api/worklogs/:id
 // @desc    Deletar um registro de trabalho
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     let workLog = await WorkLog.findById(req.params.id);
     if (!workLog) return res.status(404).json({ msg: 'Registro não encontrado' });

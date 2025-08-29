@@ -1,6 +1,7 @@
+// backend/api/routes/workers.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
 const Worker = require('../../models/Worker');
 const { check, validationResult } = require('express-validator');
 
@@ -8,7 +9,7 @@ const { check, validationResult } = require('express-validator');
 // @desc    Adicionar um novo trabalhador (com validação)
 router.post('/',
   [
-    auth,
+    protect, // <-- CORREÇÃO AQUI
     check('name', 'O nome do trabalhador é obrigatório').trim().not().isEmpty(),
     check('isRegistered', 'O campo "Registrado" deve ser um valor booleano (true/false)').isBoolean(),
     check('childrenCount', 'O número de filhos deve ser um valor numérico').isNumeric(),
@@ -33,7 +34,7 @@ router.post('/',
 
 // @route   GET /api/workers
 // @desc    Obter todos os trabalhadores
-router.get('/', auth, async (req, res) => {
+router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     const workers = await Worker.find().sort({ name: 1 });
     res.json(workers);
@@ -47,7 +48,7 @@ router.get('/', auth, async (req, res) => {
 // @desc    Atualizar (editar) um trabalhador (com validação)
 router.put('/:id',
   [
-    auth,
+    protect, // <-- CORREÇÃO AQUI
     check('name', 'O nome do trabalhador é obrigatório').trim().not().isEmpty(),
     check('isRegistered', 'O campo "Registrado" deve ser um valor booleano (true/false)').isBoolean(),
     check('childrenCount', 'O número de filhos deve ser um valor numérico').isNumeric(),
@@ -75,7 +76,7 @@ router.put('/:id',
 
 // @route   DELETE /api/workers/:id
 // @desc    Deletar um trabalhador
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     let worker = await Worker.findById(req.params.id);
     if (!worker) return res.status(404).json({ msg: 'Trabalhador não encontrado' });

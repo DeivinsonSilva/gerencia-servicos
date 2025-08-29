@@ -1,12 +1,12 @@
 // backend/api/routes/farms.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
 const Farm = require('../../models/Farm');
 const { check, validationResult } = require('express-validator');
 
 // @route   GET /api/farms
-router.get('/', auth, async (req, res) => {
+router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     const farms = await Farm.find().sort({ name: 1 });
     res.json(farms);
@@ -19,8 +19,7 @@ router.get('/', auth, async (req, res) => {
 // @route   POST /api/farms
 router.post('/',
   [
-    auth,
-    // --- REGRAS DE VALIDAÇÃO REFINADAS ---
+    protect, // <-- CORREÇÃO AQUI
     check('name', 'O nome da fazenda é obrigatório').trim().not().isEmpty(),
     check('owner', 'O nome do proprietário é obrigatório').trim().not().isEmpty(),
     check('city', 'A cidade é obrigatória').trim().not().isEmpty(),
@@ -46,7 +45,7 @@ router.post('/',
 // @route   PUT /api/farms/:id
 router.put('/:id',
   [
-    auth,
+    protect, // <-- CORREÇÃO AQUI
     check('name', 'O nome da fazenda é obrigatório').trim().not().isEmpty(),
     check('owner', 'O nome do proprietário é obrigatório').trim().not().isEmpty(),
     check('city', 'A cidade é obrigatória').trim().not().isEmpty(),
@@ -73,7 +72,7 @@ router.put('/:id',
 );
 
 // @route   DELETE /api/farms/:id
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     let farm = await Farm.findById(req.params.id);
     if (!farm) return res.status(404).json({ msg: 'Fazenda não encontrada' });

@@ -1,12 +1,12 @@
 // backend/api/routes/payroll.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
 const WorkLog = require('../../models/WorkLog');
 const Worker = require('../../models/Worker');
 const mongoose = require('mongoose');
 
-router.post('/detailed', auth, async (req, res) => {
+router.post('/detailed', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     const { workerType, startDate, endDate, inssRate, salarioFamiliaValue } = req.body;
 
@@ -42,8 +42,7 @@ router.post('/detailed', auth, async (req, res) => {
         $group: {
           _id: {
             worker: '$worker',
-            // --- A CORREÇÃO ESTÁ AQUI ---
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$date' } } // Removido o hífen extra
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$date' } }
           },
           dailyTotal: { $sum: '$totalPay' }
         }
