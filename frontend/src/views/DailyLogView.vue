@@ -192,7 +192,9 @@ const formatCurrency = (value) => {
 const fetchInitialData = async () => {
   try {
     const [workersRes, farmsRes, servicesRes] = await Promise.all([
-      api.get('/workers'), api.get('/farms'), api.get('/services')
+      api.get('/workers?onlyActive=true'), // Pede apenas trabalhadores ativos
+      api.get('/farms?onlyActive=true'),    // Pede apenas fazendas ativas
+      api.get('/services?onlyActive=true') // Pede apenas serviços ativos
     ]);
     workers.value = workersRes.data;
     farms.value = farmsRes.data;

@@ -1,16 +1,17 @@
 // backend/api/routes/services.js
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
+const { protect } = require('../../middleware/auth');
 const Service = require('../../models/Service');
 const { check, validationResult } = require('express-validator');
 
-// @route   GET /api/services
-// @desc    Obter todos os serviços
-// @access  Privado
-router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
+router.get('/', protect, async (req, res) => {
   try {
-    const services = await Service.find().sort({ name: 1 });
+    const filter = {};
+    if (req.query.onlyActive === 'true') {
+      filter.active = true;
+    }
+    const services = await Service.find(filter).sort({ name: 1 });
     res.json(services);
   } catch (err) {
     console.error(err.message);
@@ -18,11 +19,9 @@ router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   }
 });
 
-// @route   POST /api/services
-// @desc    Adicionar um novo serviço (com validação)
 router.post('/',
   [
-    protect, // <-- CORREÇÃO AQUI
+    protect,
     check('name', 'O nome do serviço é obrigatório').not().isEmpty().trim(),
     check('price', 'O preço é obrigatório e deve ser um número').isNumeric(),
   ],
@@ -44,11 +43,9 @@ router.post('/',
   }
 );
 
-// @route   PUT /api/services/:id
-// @desc    Atualizar (editar) um serviço (com validação)
 router.put('/:id',
   [
-    protect, // <-- CORREÇÃO AQUI
+    protect,
     check('name', 'O nome do serviço é obrigatório').not().isEmpty().trim(),
     check('price', 'O preço é obrigatório e deve ser um número').isNumeric(),
   ],
@@ -83,10 +80,7 @@ router.put('/:id',
   }
 );
 
-// @route   DELETE /api/services/:id
-// @desc    Deletar um serviço
-// @access  Privado
-router.delete('/:id', protect, async (req, res) => { // <-- CORREÇÃO AQUI
+router.delete('/:id', protect, async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service) {
