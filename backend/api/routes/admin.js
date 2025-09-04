@@ -2,9 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const auth = require('../../middleware/auth');
+const { protect, authorize } = require('../../middleware/auth'); // <-- 1. IMPORTAÇÃO CORRETA
 
-// Import all models to easily access them
+// Importa todos os modelos
 const User = require('../../models/User');
 const Farm = require('../../models/Farm');
 const Service = require('../../models/Service');
@@ -12,17 +12,11 @@ const Worker = require('../../models/Worker');
 const WorkLog = require('../../models/WorkLog');
 const LoginHistory = require('../../models/LoginHistory');
 
-const adminOnly = (req, res, next) => {
-    if (req.user.role !== 'Admin') {
-        return res.status(403).json({ msg: 'Acesso negado: rota apenas para administradores.' });
-    }
-    next();
-};
+// A função 'adminOnly' foi removida pois agora usamos o middleware 'authorize('Admin')'
 
 // @route   GET /api/admin/stats
 // @desc    Obter estatísticas do sistema e do banco de dados
-router.get('/stats', auth, adminOnly, async (req, res) => {
-    // ... (código existente, sem alterações)
+router.get('/stats', protect, authorize('Admin'), async (req, res) => { // <-- 2. MIDDLEWARES CORRIGIDOS
     try {
         const db = mongoose.connection.db;
         const [
@@ -58,22 +52,19 @@ router.get('/stats', auth, adminOnly, async (req, res) => {
     }
 });
 
-// --- NOVA ROTA PARA LIMPAR COLEÇÕES ---
 // @route   DELETE /api/admin/collection/:name
 // @desc    Limpar (deletar todos os documentos de) uma coleção
 // @access  Admin
-router.delete('/collection/:name', auth, adminOnly, async (req, res) => {
+router.delete('/collection/:name', protect, authorize('Admin'), async (req, res) => { // <-- 2. MIDDLEWARES CORRIGIDOS
     try {
         const collectionName = req.params.name;
 
-        // Um mapa para associar o nome da coleção vindo da URL ao nosso Model do Mongoose
         const collections = {
             Farms: Farm,
             Services: Service,
             Workers: Worker,
             WorkLogs: WorkLog,
-            LoginHistory: LoginHistory,
-            // Propositalmente não incluímos 'Users' para segurança
+            'Acessos ao Sistema': LoginHistory, // <-- CORREÇÃO AQUI
         };
 
         const Model = collections[collectionName];
@@ -82,7 +73,7 @@ router.delete('/collection/:name', auth, adminOnly, async (req, res) => {
             return res.status(404).json({ msg: 'Coleção não encontrada ou não permitida para limpeza.' });
         }
 
-        const deleteResult = await Model.deleteMany({}); // {} como filtro significa "deletar tudo"
+        const deleteResult = await Model.deleteMany({});
 
         res.json({ msg: `Coleção '${collectionName}' limpa com sucesso. ${deleteResult.deletedCount} registros removidos.` });
 
@@ -91,6 +82,5 @@ router.delete('/collection/:name', auth, adminOnly, async (req, res) => {
         res.status(500).send('Erro no Servidor');
     }
 });
-
 
 module.exports = router;

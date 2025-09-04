@@ -1,13 +1,13 @@
 // backend/api/routes/reports.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
 const WorkLog = require('../../models/WorkLog');
 const mongoose = require('mongoose');
 
 // @route   GET /api/reports/annual
 // @desc    Gerar relatório anual de dias trabalhados por trabalhador
-router.get('/annual', auth, async (req, res) => {
+router.get('/annual', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   try {
     const { year, workerIds } = req.query;
 

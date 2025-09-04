@@ -2,23 +2,38 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-module.exports = function(req, res, next) {
-  console.log('--- EXECUTANDO MIDDLEWARE DE AUTH ---');
+// Middleware para verificar o token (protege a rota)
+exports.protect = (req, res, next) => {
   const token = req.header('x-auth-token');
 
   if (!token) {
-    console.log('Auth middleware: Token não encontrado.');
-    return res.status(401).json({ msg: 'Sem token, autorização negada' });
+    return res.status(401).json({ success: false, error: 'Sem token, autorização negada' });
   }
 
   try {
-    console.log('Auth middleware: Verificando token...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.user;
-    console.log('Auth middleware: Token verificado com sucesso!');
+    
+    // Anexa o usuário decodificado à requisição
+    // Supondo que o payload do token seja { user: { id: '...', role: '...' } }
+    req.user = decoded.user; 
+    
     next();
   } catch (err) {
-    console.error('Auth middleware: ERRO - Token não é válido.');
-    res.status(401).json({ msg: 'Token não é válido' });
+    res.status(401).json({ success: false, error: 'Token não é válido' });
   }
+};
+
+// Middleware para verificar o cargo do usuário (autoriza o acesso)
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    // Verifica se o cargo do usuário (anexado pelo middleware 'protect') 
+    // está na lista de cargos permitidos para esta rota
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: `O usuário com o cargo '${req.user.role}' não tem autorização para acessar esta rota.`
+      });
+    }
+    next();
+  };
 };

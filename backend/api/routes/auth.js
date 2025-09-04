@@ -4,8 +4,10 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User');
-const LoginHistory = require('../../models/LoginHistory'); // <-- 1. IMPORTA O NOVO MODEL
-const auth = require('../../middleware/auth');
+const LoginHistory = require('../../models/LoginHistory');
+
+// 👇 1. ALTERAÇÃO AQUI: Importa a função 'protect' de dentro do objeto do middleware
+const { protect } = require('../../middleware/auth');
 require('dotenv').config();
 
 router.post('/login', async (req, res) => {
@@ -21,11 +23,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ msg: 'Credenciais inválidas' });
     }
 
-    // --- 2. NOVA LÓGICA DE REGISTRO DE LOGIN ---
-    // Assim que o login é validado, criamos um registro no histórico.
     const newLogin = new LoginHistory({ user: user._id });
     await newLogin.save();
-    // --- FIM DA NOVA LÓGICA ---
 
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(
@@ -43,7 +42,8 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/me', auth, async (req, res) => {
+// 👇 2. ALTERAÇÃO AQUI: Usa 'protect' em vez de 'auth'
+router.get('/me', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
@@ -53,4 +53,5 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// Corrigindo um pequeno erro de digitação de "Exports" para "exports"
 module.exports = router;

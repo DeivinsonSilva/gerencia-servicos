@@ -15,26 +15,37 @@ const app = express();
 
 // --- Configuração de Middlewares ---
 
-// Pega a string de URLs do ambiente (ex: "url1.com,url2.com")
-// e a transforma em um array ["url1.com", "url2.com"]
-const allowedProdUrls = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+// Pega a string de URLs de produção do ambiente e transforma em um array
+const productionUrls = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+
+// Define um padrão Regex para todas as URLs de preview da Vercel
+const previewUrlPattern = /^https:\/\/gerencia-servicos-git-.*-deivinsonsilvas-projects\.vercel\.app$/;
 
 const allowedOrigins = [
-    'http://localhost:5173', // Sempre permite o ambiente de desenvolvimento
-    ...allowedProdUrls      // Adiciona todas as URLs de produção da variável de ambiente
+    'http://localhost:5173', // Ambiente de desenvolvimento local
+    ...productionUrls,      // Suas URLs de produção e domínios customizados
+    previewUrlPattern       // O padrão para todos os previews
 ];
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Permite requisições sem 'origin' (ex: Postman) ou de origens na lista
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        // Permite requisições sem 'origin' (como Insomnia, apps mobile)
+        if (!origin) return callback(null, true);
+
+        // Verifica se a origem está na lista de URLs fixas ou se corresponde ao padrão Regex
+        const isAllowed = allowedOrigins.some(allowedOrigin => {
+            if (allowedOrigin instanceof RegExp) {
+                return allowedOrigin.test(origin);
+            }
+            return allowedOrigin === origin;
+        });
+
+        if (isAllowed) {
             callback(null, true);
         } else {
             callback(new Error('Acesso não permitido pela política de CORS'));
         }
     },
-    // Define quais cabeçalhos customizados a API aceita
-    // ✅ Essencial para permitir o envio do token de autenticação
     allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token'
 };
 
@@ -54,6 +65,7 @@ app.use('/api/services', require(path.join(__dirname, 'routes/services.js')));
 app.use('/api/users', require(path.join(__dirname, 'routes/users.js')));
 app.use('/api/workers', require(path.join(__dirname, 'routes/workers.js')));
 app.use('/api/worklogs', require(path.join(__dirname, 'routes/worklogs.js')));
+app.use('/api/suggestions', require(path.join(__dirname, 'routes/suggestions.js')));
 
 
 // --- Exportação do Módulo ---

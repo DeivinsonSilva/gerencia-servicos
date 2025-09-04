@@ -3,14 +3,12 @@
     <header v-if="currentUser" class="border-b border-slate-700/50 sticky top-0 bg-slate-900 z-20">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <!-- Logo/Título Principal -->
           <div class="flex-shrink-0">
             <div class="text-white text-xl font-bold tracking-wider cursor-default">
               SISTEMA DE GERENCIAMENTO
             </div>
           </div>
 
-          <!-- Menu Desktop (Escondido em telas pequenas) -->
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-2">
               <router-link to="/" class="nav-link">Dashboard</router-link>
@@ -44,12 +42,12 @@
                  <div v-if="openMenu === 'admin'" @mouseleave="openMenu = null" class="absolute z-10 mt-2 w-56 bg-slate-800 rounded-md shadow-lg border border-slate-700">
                   <router-link to="/usuarios" class="dropdown-link" @click="closeAllMenus">Gerenciar Usuários</router-link>
                   <router-link to="/admin" class="dropdown-link" @click="closeAllMenus">Dashboard do Sistema</router-link>
+                  <router-link to="/sugestoes" class="dropdown-link" @click="closeAllMenus">Gerenciar Sugestões</router-link>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Menu do Usuário (Desktop) -->
           <div class="hidden md:block">
             <div class="ml-4 flex items-center md:ml-6">
               <div class="relative">
@@ -65,7 +63,6 @@
             </div>
           </div>
 
-          <!-- Botão Hambúrguer (Aparece apenas em telas pequenas) -->
           <div class="-mr-2 flex md:hidden">
             <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 focus:outline-none focus:bg-slate-700 focus:text-white">
               <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -77,7 +74,6 @@
         </div>
       </nav>
 
-      <!-- Menu Mobile -->
       <div v-if="isMobileMenuOpen" class="md:hidden">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <router-link to="/" class="mobile-link" @click="closeAllMenus">Dashboard</router-link>
@@ -90,6 +86,7 @@
           <div v-if="isAdmin" class="border-t border-slate-700 pt-2 mt-2">
             <router-link to="/usuarios" class="mobile-link" @click="closeAllMenus">Gerenciar Usuários</router-link>
             <router-link to="/admin" class="mobile-link" @click="closeAllMenus">Dashboard do Sistema</router-link>
+            <router-link to="/sugestoes" class="mobile-link" @click="closeAllMenus">Gerenciar Sugestões</router-link>
           </div>
         </div>
         <div class="pt-4 pb-3 border-t border-slate-700">
@@ -106,12 +103,10 @@
       </div>
     </header>
     
-    <!-- O conteúdo principal agora cresce para preencher o espaço -->
     <main class="flex-grow">
       <router-view />
     </main>
 
-    <!-- NOSSO NOVO RODAPÉ -->
     <Footer v-if="currentUser" />
   </div>
 </template>
@@ -120,7 +115,7 @@
 import { ref, computed } from 'vue';
 import { RouterLink, RouterView, useRouter } from 'vue-router';
 import { currentUser, logout } from '@/data/store.js';
-import Footer from '@/components/Footer.vue'; // <-- 1. IMPORTA O COMPONENTE
+import Footer from '@/components/Footer.vue';
 
 const router = useRouter();
 const openMenu = ref(null); 

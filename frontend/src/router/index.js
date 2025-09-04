@@ -13,6 +13,7 @@ import ReportsView from '../views/ReportsView.vue'
 import PayslipView from '../views/PayslipView.vue'
 import AdminDashboardView from '../views/AdminDashboardView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import SuggestionsView from '../views/SuggestionsView.vue' // <-- 1. IMPORTA A NOVA VIEW
 
 const routes = [
   { path: '/login', name: 'login', component: LoginView },
@@ -30,38 +31,42 @@ const routes = [
     path: '/usuarios', 
     name: 'users', 
     component: UsersView,
-    meta: { requiresAdmin: true } // Etiqueta de Admin
+    meta: { requiresAdmin: true }
   },
   { 
     path: '/admin', 
     name: 'admin-dashboard', 
     component: AdminDashboardView,
-    meta: { requiresAdmin: true } // Etiqueta de Admin
+    meta: { requiresAdmin: true }
+  },
+  { 
+    path: '/sugestoes', // <-- 2. ADICIONA A NOVA ROTA
+    name: 'suggestions', 
+    component: SuggestionsView,
+    meta: { requiresAdmin: true } // Usa a mesma proteção de Admin
   }
 ];
 
 const router = createRouter({
-  // --- A CORREÇÃO ESTÁ AQUI --- Nesse contexto.
-  history: createWebHistory(), // Removido o argumento 'import.meta.url'
+  history: createWebHistory(),
   routes
 });
 
-// --- NOSSO "SEGURANÇA" DE ROTAS APRIMORADO ---
+// O seu "segurança" de rotas (router.beforeEach) já está perfeito 
+// e vai proteger a nova rota automaticamente, pois ela tem "meta: { requiresAdmin: true }".
+// Nenhuma alteração é necessária aqui.
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('authToken');
     const isUserLoggedIn = !!token;
 
-    // 1. Se o usuário não está logado e a página não é a de login, redireciona para o login.
     if (!isUserLoggedIn && to.name !== 'login') {
         return next({ name: 'login' });
     }
 
-    // 2. Se o usuário está logado e tenta acessar a página de login, redireciona para o dashboard.
     if (isUserLoggedIn && to.name === 'login') {
         return next({ name: 'dashboard' });
     }
 
-    // 3. Se a rota exige permissão de Admin
     if (to.meta.requiresAdmin) {
         if (isUserLoggedIn) {
             try {
@@ -69,21 +74,19 @@ router.beforeEach((to, from, next) => {
                 const userRole = decodedToken.user.role;
                 
                 if (userRole === 'Admin') {
-                    return next(); // Permite o acesso
+                    return next();
                 } else {
                     console.warn('Acesso negado: Rota apenas para administradores.');
-                    return next({ name: 'dashboard' }); // Redireciona se não for Admin
+                    return next({ name: 'dashboard' });
                 }
             } catch (e) {
                 console.error("Token inválido ou expirado:", e);
-                // Se o token for inválido, limpa e redireciona para o login. coment
                 localStorage.removeItem('authToken');
                 return next({ name: 'login' });
             }
         }
     }
 
-    // 4. Para todas as outras situações, permite a navegação.
     return next();
 });
 

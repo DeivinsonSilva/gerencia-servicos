@@ -1,12 +1,12 @@
 // backend/api/routes/worklogs.js
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth');
 const WorkLog = require('../../models/WorkLog');
 
 // @route   POST /api/worklogs
 // @desc    Criar um novo registro de trabalho
-router.post('/', auth, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   const { date, worker, farm, service, status, production, unitPrice } = req.body;
 
   if (status === 'Presente' && (!farm || !service)) {
@@ -37,10 +37,10 @@ router.post('/', auth, async (req, res) => {
 });
 
 // @route   GET /api/worklogs
-// @desc    Obter registros de trabalho com filtros e paginação
-router.get('/', auth, async (req, res) => {
+// @desc    Obter registros de trabalho com filtros e paginação (ou todos)
+router.get('/', protect, async (req, res) => {
   try {
-    const { date, month, page = 1, limit = 10 } = req.query;
+    const { date, month, page = 1, limit = 10, fetchAll } = req.query;
     
     const query = {};
     if (date) {
@@ -57,6 +57,24 @@ router.get('/', auth, async (req, res) => {
       query.date = { $gte: startDate, $lte: endDate };
     }
     
+    // 👇 ALTERAÇÃO AQUI: Lógica para desativar a paginação 👇
+    if (fetchAll === 'true') {
+      // Se fetchAll=true, busca todos os documentos sem paginação
+      const logs = await WorkLog.find(query)
+        .populate('worker', 'name')
+        .populate('farm', 'name')
+        .populate('service', 'name')
+        .sort({ date: -1, createdAt: -1 });
+      
+      return res.json({
+        logs,
+        total: logs.length,
+        page: 1,
+        pages: 1
+      });
+    }
+
+    // Lógica de paginação padrão (continua funcionando como antes)
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
@@ -86,7 +104,7 @@ router.get('/', auth, async (req, res) => {
 
 // @route   PUT /api/worklogs/:id
 // @desc    Atualizar um registro de trabalho
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   const { farm, service, status, production, unitPrice } = req.body;
   try {
     let workLog = await WorkLog.findById(req.params.id);
@@ -117,7 +135,7 @@ router.put('/:id', auth, async (req, res) => {
 
 // @route   DELETE /api/worklogs/:id
 // @desc    Deletar um registro de trabalho
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
     let workLog = await WorkLog.findById(req.params.id);
     if (!workLog) return res.status(404).json({ msg: 'Registro não encontrado' });
