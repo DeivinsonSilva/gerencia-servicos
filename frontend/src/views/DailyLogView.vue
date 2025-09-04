@@ -192,9 +192,9 @@ const formatCurrency = (value) => {
 const fetchInitialData = async () => {
   try {
     const [workersRes, farmsRes, servicesRes] = await Promise.all([
-      api.get('/workers?onlyActive=true'), // Pede apenas trabalhadores ativos
-      api.get('/farms?onlyActive=true'),    // Pede apenas fazendas ativas
-      api.get('/services?onlyActive=true') // Pede apenas serviços ativos
+      api.get('/workers?onlyActive=true'),
+      api.get('/farms?onlyActive=true'),
+      api.get('/services?onlyActive=true')
     ]);
     workers.value = workersRes.data;
     farms.value = farmsRes.data;
@@ -208,7 +208,8 @@ const fetchWorkLogs = async () => {
   if (!selectedDate.value) { workLogs.value = []; return; }
   isLoading.value = true;
   try {
-    const response = await api.get(`/worklogs?date=${selectedDate.value}`);
+    // 👇 ALTERAÇÃO AQUI: Adicionado o parâmetro `&fetchAll=true`
+    const response = await api.get(`/worklogs?date=${selectedDate.value}&fetchAll=true`);
     workLogs.value = response.data.logs;
   } catch (error) {
     toast.error(`Não foi possível buscar os registros para esta data.`);
