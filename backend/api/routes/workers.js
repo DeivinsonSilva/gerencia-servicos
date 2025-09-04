@@ -1,15 +1,13 @@
 // backend/api/routes/workers.js
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../../middleware/auth'); // <-- CORREÇÃO AQUI
+const { protect } = require('../../middleware/auth');
 const Worker = require('../../models/Worker');
 const { check, validationResult } = require('express-validator');
 
-// @route   POST /api/workers
-// @desc    Adicionar um novo trabalhador (com validação)
 router.post('/',
   [
-    protect, // <-- CORREÇÃO AQUI
+    protect,
     check('name', 'O nome do trabalhador é obrigatório').trim().not().isEmpty(),
     check('isRegistered', 'O campo "Registrado" deve ser um valor booleano (true/false)').isBoolean(),
     check('childrenCount', 'O número de filhos deve ser um valor numérico').isNumeric(),
@@ -32,11 +30,13 @@ router.post('/',
   }
 );
 
-// @route   GET /api/workers
-// @desc    Obter todos os trabalhadores
-router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
+router.get('/', protect, async (req, res) => {
   try {
-    const workers = await Worker.find().sort({ name: 1 });
+    const filter = {};
+    if (req.query.onlyActive === 'true') {
+      filter.active = true;
+    }
+    const workers = await Worker.find(filter).sort({ name: 1 });
     res.json(workers);
   } catch (err) {
     console.error(err.message);
@@ -44,11 +44,9 @@ router.get('/', protect, async (req, res) => { // <-- CORREÇÃO AQUI
   }
 });
 
-// @route   PUT /api/workers/:id
-// @desc    Atualizar (editar) um trabalhador (com validação)
 router.put('/:id',
   [
-    protect, // <-- CORREÇÃO AQUI
+    protect,
     check('name', 'O nome do trabalhador é obrigatório').trim().not().isEmpty(),
     check('isRegistered', 'O campo "Registrado" deve ser um valor booleano (true/false)').isBoolean(),
     check('childrenCount', 'O número de filhos deve ser um valor numérico').isNumeric(),
@@ -74,9 +72,7 @@ router.put('/:id',
   }
 );
 
-// @route   DELETE /api/workers/:id
-// @desc    Deletar um trabalhador
-router.delete('/:id', protect, async (req, res) => { // <-- CORREÇÃO AQUI
+router.delete('/:id', protect, async (req, res) => {
   try {
     let worker = await Worker.findById(req.params.id);
     if (!worker) return res.status(404).json({ msg: 'Trabalhador não encontrado' });
