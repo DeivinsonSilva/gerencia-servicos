@@ -3,7 +3,7 @@
     <div class="w-full max-w-5xl">
       <div class="card grid md:grid-cols-2 shadow-2xl overflow-hidden">
         <div class="p-8 md:p-12">
-          <h2 class="text-3xl font-bold text-white mb-2">Acessar o Sistema</h2>
+          <h2 class="text-3xl font-bold text-white mb-2">Acessar o Sistema </h2>
           <p class="text-slate-400 mb-8">Utilize suas credenciais para entrar.</p>
           <form @submit.prevent="handleLogin" class="space-y-6">
             <div>
