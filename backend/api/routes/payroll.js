@@ -25,6 +25,8 @@ router.post('/detailed', protect, async (req, res) => { // <-- CORREÇÃO AQUI
       workerFilter.semanaDentro = true;
     }
 
+    workerFilter.active = true;
+
     const workers = await Worker.find(workerFilter).sort({ name: 1 });
     if (workers.length === 0) {
         return res.json([]);
