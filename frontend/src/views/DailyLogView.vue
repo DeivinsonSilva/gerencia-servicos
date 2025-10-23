@@ -70,8 +70,7 @@
                   </div>
                   <div>
                     <label for="production" class="form-label">Produção:</label>
-                    <input v-model.number="newLog.production" type="number" id="production" class="form-input">
-                  </div>
+                    <input v-model.number="newLog.production" type="number" step="any" id="production" class="form-input">                  </div>
                   <div>
                     <label for="unitPrice" class="form-label">Preço (R$):</label>
                     <input v-model.number="newLog.unitPrice" type="number" step="0.01" id="unitPrice" class="form-input">
@@ -117,30 +116,29 @@
         </div>
       </main>
     </div>
+    <Modal :show="isModalOpen" @close="isModalOpen = false">
+      <template #header>Editar Lançamento</template>
+      <template #body>
+        <form v-if="editingLog._id" @submit.prevent="updateWorkLog" class="space-y-4">
+          <div><label class="form-label">Trabalhador:</label><p class="font-semibold text-white mt-1">{{ editingLog.workerName }}</p></div>
+          <div class="flex items-center"><input v-model="editingIsAbsent" type="checkbox" id="edit_markAbsent" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500"><label for="edit_markAbsent" class="ml-2 block text-sm text-slate-300">Marcar como Falta</label></div>
+          <div v-if="!editingIsAbsent" class="space-y-4">
+            <div><label for="edit_farmSelect" class="form-label">Fazenda:</label><select v-model="editingLog.farm" id="edit_farmSelect" class="form-select"><option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option></select></div>
+            <div><label for="edit_serviceSelect" class="form-label">Serviço:</label><select v-model="editingLog.service" id="edit_serviceSelect" class="form-select"><option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option></select></div>
+            <div><label for="edit_production" class="form-label">Produção:</label><input v-model.number="editingLog.production" type="number" step="any" id="edit_production" class="form-input"></div>
+            <div><label for="edit_unitPrice" class="form-label">Preço (R$):</label><input v-model.number="editingLog.unitPrice" type="number" step="0.01" id="edit_unitPrice" class="form-input"></div>
+          </div>
+        </form>
+      </template>
+      <template #footer>
+        <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
+        <button @click="updateWorkLog" class="btn btn-primary" :disabled="isLoading">
+          <span v-if="isLoading">Salvando...</span>
+          <span v-else>Salvar Alterações</span>
+        </button>
+      </template>
+    </Modal>
   </div>
-
-  <Modal :show="isModalOpen" @close="isModalOpen = false">
-    <template #header>Editar Lançamento</template>
-    <template #body>
-      <form v-if="editingLog._id" @submit.prevent="updateWorkLog" class="space-y-4">
-        <div><label class="form-label">Trabalhador:</label><p class="font-semibold text-white mt-1">{{ editingLog.workerName }}</p></div>
-        <div class="flex items-center"><input v-model="editingIsAbsent" type="checkbox" id="edit_markAbsent" class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-blue-600 focus:ring-blue-500"><label for="edit_markAbsent" class="ml-2 block text-sm text-slate-300">Marcar como Falta</label></div>
-        <div v-if="!editingIsAbsent" class="space-y-4">
-          <div><label for="edit_farmSelect" class="form-label">Fazenda:</label><select v-model="editingLog.farm" id="edit_farmSelect" class="form-select"><option v-for="farm in farms" :key="farm._id" :value="farm._id">{{ farm.name }}</option></select></div>
-          <div><label for="edit_serviceSelect" class="form-label">Serviço:</label><select v-model="editingLog.service" id="edit_serviceSelect" class="form-select"><option v-for="service in services" :key="service._id" :value="service._id">{{ service.name }}</option></select></div>
-          <div><label for="edit_production" class="form-label">Produção:</label><input v-model.number="editingLog.production" type="number" id="edit_production" class="form-input"></div>
-          <div><label for="edit_unitPrice" class="form-label">Preço (R$):</label><input v-model.number="editingLog.unitPrice" type="number" step="0.01" id="edit_unitPrice" class="form-input"></div>
-        </div>
-      </form>
-    </template>
-    <template #footer>
-      <button @click="isModalOpen = false" class="btn bg-slate-600 hover:bg-slate-500">Cancelar</button>
-      <button @click="updateWorkLog" class="btn btn-primary" :disabled="isLoading">
-        <span v-if="isLoading">Salvando...</span>
-        <span v-else>Salvar Alterações</span>
-      </button>
-    </template>
-  </Modal>
 </template>
 
 <script setup>
